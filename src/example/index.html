@@ -1,0 +1,57 @@
+<html>
+	<style>
+		@font-face {
+			font-family: "Open Sans";
+			font-style: normal;
+			font-weight: 400;
+			src: local("Open Sans"), local("OpenSans"), url("http://themes.googleusercontent.com/static/fonts/opensans/v6/cJZKeOuBrn4kERxqtaUH3T8E0i7KZn-EPnyo3HZu7kw.woff") format("woff");
+		}
+		body {
+			margin: 0;
+			padding: 0;
+			font-family: 'Open Sans';
+		}
+		h1 {
+			/*text-transform: uppercase;*/
+			background-color: #d35400;
+			padding: 8px 16px;
+			margin: 5px 20px;
+			display: inline-block;
+			color: #fff;
+			font-weight: normal;
+		}
+		pre {
+			background-color: #34495e;
+			color: #ecf0f1;
+			font-family: 'Source Code Pro', 'monospace';
+			width: calc(100% - 40px);
+			height: 400px;
+			margin: 0 20px;
+			padding: 10px;
+			box-sizing: border-box;
+			overflow: auto;
+		}
+	</style>
+	<h1>Starlight</h1>
+	<pre></pre>
+	<script src="./starlight.js"></script>
+	<script>
+		var output = '';
+		var pre = document.getElementsByTagName('pre')[0];
+		var timeout;
+		function updateOutput() {
+			if (!timeout) {
+				timeout = window.requestAnimationFrame(function() {
+					pre.innerHTML = output;
+					// pre.scrollTo(999999);
+					timeout = null;
+				});
+			}
+		}
+		light.stdout.write = function () {
+			output += Array.prototype.join.call(arguments, '\t');
+			updateOutput();
+		}
+	</script>
+	<script src="./example.lua.js"></script>
+</html>
