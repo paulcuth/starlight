@@ -62,6 +62,10 @@ class Scope {
 		this._variables[key] = value;
 	}
 
+	add(key, value) {
+		this._variables[key] += value;
+	}
+
 	extend(outerScope) {
 		let innerVars = Object.create(this._variables);
 		return new Scope(innerVars);

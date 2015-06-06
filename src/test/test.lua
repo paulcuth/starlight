@@ -1,16 +1,11 @@
-function moo ()
-	print 'moo'
+
+print 'Hello world'
+
+for f = 5, 1, -1 do
+	print(f..',')
 end
 
-moo()
-
--- print 'Hello world'
-
--- for f = 5, 1, -1 do
--- 	print(f..',')
--- end
-
--- print 'Lift off!'
+print 'Lift off!'
 
 -- for f = 1, 5 do
 -- 	print(f..'..')
@@ -21,6 +16,11 @@ moo()
 
 -- print (t.test)
 
+-- function moo ()
+-- 	print 'moo'
+-- end
+
+-- moo()
 
 
 
