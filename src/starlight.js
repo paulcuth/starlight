@@ -49,4 +49,23 @@ export const _G = new T({
 	}
 });
 
+class Scope {
+	constructor(variables = {}) {
+		this._variables = variables;
+	}
 
+	get(key) {
+		return this._variables[key];
+	}
+
+	set(key, value) {
+		this._variables[key] = value;
+	}
+
+	extend(outerScope) {
+		let innerVars = Object.create(this._variables);
+		return new Scope(innerVars);
+	}
+}
+
+export const globalScope = new Scope(_G);

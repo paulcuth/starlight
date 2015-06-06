@@ -25,10 +25,14 @@ const GENERATORS = {
 			let name = generate(variable, scope);
 			let value = generate(node.init[index], scope);
 			let match = name.match(/^(.*)\.get\('([^.]+)'\)$/);
+			// let match = name.match(/^([^.]+)\.((.*)\.)?get\('([^.]+)'\)$/);
 
 			if (match) {
 				let [_, subject, property] = match;
+				// let [_, subject, _, path, property] = match;
 				assignments.push(`${subject}.set('${property}', ${value})`);
+				// assignments.push(`${subject}.set('${property}', ${value})`);
+
 			} else {
 				assignments.push(`${name}=${value}`);
 			}
@@ -76,9 +80,9 @@ const GENERATORS = {
 
 
 	DoStatement(node, outerScope) {
-		let scope = Object.create(outerScope);
+		let scope, scopeDef = extendScope(outerScope);
 		let body = this.Chunk(node, scope);
-		return `(function() {\n${body}\n})()`;
+		return `(function() {\n${scopeDef}\n${body}\n})()`;
 	},
 
 
@@ -95,16 +99,16 @@ const GENERATORS = {
 		let step = node.step === null ? 1 : generate(node.step, outerScope);
 		let operator = start < end ? '<=' : '>=';
 
-		let scope = Object.create(outerScope);
+		let scope, scopeDef = extendScope(outerScope);
 		scope[variable] = true;
 
 		let body = this.Chunk(node, scope);
-		return `for (let ${variable} = ${start}; ${variable} ${operator} ${end}; ${variable} += ${step}) {\n${body}\n}`;
+		return `for (let ${variable} = ${start}; ${variable} ${operator} ${end}; ${variable} += ${step}) {\n${scopeDef}\n${body}\n}`;
 	},
 
 
 	FunctionDeclaration(node, outerScope) {
-		let scope = Object.create(outerScope);
+		let scope, scopeDef = extendScope(outerScope);
 		let parameters = node.parameters.map((param) => generate(param, scope, { initialising: true })).join();
 		let body = this.Chunk(node, scope);
 		let funcScope;
@@ -120,7 +124,7 @@ const GENERATORS = {
 		}
 
 		let identifier = generate(node.identifier, funcScope, { initialising: true });
-		let funcDef = `function ${identifier}(${parameters}){${body}}`;
+		let funcDef = `function ${identifier}(${parameters}){${scopeDef}\n${body}}`;
 
 		if (node.isLocal) {
 			return `let ${identifier} = ${funcDef}`;
@@ -138,16 +142,7 @@ const GENERATORS = {
 			return name;
 		}
 
-		let initialising = config.initialising;
-		let prefix = scope[name];
-
-		if (initialising) {
-			scope[name] = true;
-		} else if (prefix === undefined) {
-			throw new ReferenceError(`Reference to unknown identifier: ${name}`);
-		}
-
-		return (!prefix || prefix === true) ? name : `${prefix}.${name}`;
+		return `scope.get('${name}')`;
 	},
 
 
@@ -249,7 +244,15 @@ const GENERATORS = {
 	}
 }
 
-export function generate(ast, scope, config) {
+let scopeIndex = 1;
+
+function extendScope(outerIndex) {
+	let index = scopeIndex++;
+	let def = `let scope${index} = scope${outerIndex}.extend(), scope = scope${index};`;
+	return index, def;
+}
+
+function generate(ast, scope, config) {
 	let generator = GENERATORS[ast.type];
 
 	if (!generator) {
@@ -261,9 +264,7 @@ export function generate(ast, scope, config) {
 }
 
 export function generateJS(ast) {
-	let env = {
-		print: '__star._G',
-		tostring: '__star._G'
-	};
-	return generate(ast, env);
+	let init = 'let scope0 = __star.globalScope, scope = scope0;\n';
+	let user = generate(ast, 0);
+	return `${init}${user}`;
 }
