@@ -4,6 +4,7 @@
 
 var gulp = require('gulp');
 var babel = require('gulp-babel');
+var sourcemaps = require('gulp-sourcemaps');
 var concat = require('gulp-concat');
 
 
@@ -56,9 +57,12 @@ gulp.task('test', function () {
     var starlight = require('./dist/build-tools/gulp-starlight');
 
     // Starlight ENV: Transpile and copy
-    gulp.src('src/starlight.js')
+    gulp.src('src/starlight/**/*.js')
+        .pipe(sourcemaps.init())
         .pipe(babel())
-        .pipe(gulp.dest('dist/test'));
+        // .pipe(concat('starlight.js'))
+        .pipe(sourcemaps.write('.'))
+        .pipe(gulp.dest('dist/test/starlight'));
 
     // Test script: Translate and copy
     gulp.src('src/test/test.lua')

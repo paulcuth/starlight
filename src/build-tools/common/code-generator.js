@@ -24,31 +24,27 @@ const LOGICAL_OP_MAP = {
 
 const GENERATORS = {
 
-	// AssignmentStatement(node, scope) {
-	// 	let assignments = [];
-	// 	node.variables.forEach((variable, index) => {
-	// 		let name = generate(variable, scope);
-	// 		let value = generate(node.init[index], scope);
-	// 		let match = name.match(/^(.*)\.get\('([^.]+)'\)$/);
-	// 		// let match = name.match(/^([^.]+)\.((.*)\.)?get\('([^.]+)'\)$/);
+	AssignmentStatement(node, scope) {
+		let assignments = node.variables.map((variable, index) => {
+			let name = scoped(variable, scope);
+			let value = generate(node.init[index], scope);
+			let match = name.match(/^(.*).get\('([^.]+)'\)$/);
 
-	// 		if (match) {
-	// 			let [_, subject, property] = match;
-	// 			// let [_, subject, _, path, property] = match;
-	// 			assignments.push(`${subject}.set('${property}', ${value})`);
-	// 			// assignments.push(`${subject}.set('${property}', ${value})`);
-
-	// 		} else {
-	// 			assignments.push(`${name}=${value}`);
-	// 		}
-	// 	});
-	// 	return assignments.join(';\n');
-	// },
+			if (match) {
+				let [_, subject, property] = match;
+				return `${subject}.set('${property}', ${value})`;
+			} else {
+				console.info(name);
+				throw new Error('Unhandled'); // TODO: Remove
+			}
+		});
+		return assignments.join(';\n');
+	},
 
 
 	BinaryExpression(node, scope) {
-		let left = getIdentifierInScope(node.left, scope);
-		let right = getIdentifierInScope(node.right, scope);
+		let left = scoped(node.left, scope);
+		let right = scoped(node.right, scope);
 		let operator = BIN_OP_MAP[node.operator];
 
 		if (!operator) {
@@ -67,7 +63,7 @@ const GENERATORS = {
 
 	CallExpression(node, scope) {
 		let functionName = generate(node.base, scope);
-		let args = node.arguments.map((arg) => generate(arg, scope)).join(', ');
+		let args = node.arguments.map((arg) => scoped(arg, scope)).join(', ');
 		return `scope.get('${functionName}')(${args})`;
 	},
 
@@ -78,17 +74,17 @@ const GENERATORS = {
 	},
 
 
-	// DoStatement(node, outerScope) {
-	// 	let { scope, scopeDef } = extendScope(outerScope);
-	// 	let body = this.Chunk(node, scope);
-	// 	return `(function() {\n${scopeDef}\n${body}\n})()`;
-	// },
+	DoStatement(node, outerScope) {
+		let { scope, scopeDef } = extendScope(outerScope);
+		let body = this.Chunk(node, scope);
+		return `(function() {\n${scopeDef}\n${body}\n})()`;
+	},
 
 
-	// ElseClause(node, scope) {
-	// 	let body = this.Chunk(node, scope);
-	// 	return `{${body}}`;
-	// },
+	ElseClause(node, scope) {
+		let body = this.Chunk(node, scope);
+		return `{\n${body}\n}`;
+	},
 
 
 	ForNumericStatement(node, outerScope) {
@@ -108,94 +104,92 @@ const GENERATORS = {
 	},
 
 
-	// FunctionDeclaration(node, outerScope) {
-	// 	let { scope, scopeDef } = extendScope(outerScope);
-	// 	let parameters = node.parameters.map((param) => generate(param, scope, { initialising: true })).join();
-	// 	let body = this.Chunk(node, scope);
-	// 	let funcScope;
+	FunctionDeclaration(node, outerScope) {
+		let { scope, scopeDef } = extendScope(outerScope);
+		let isAnonymous = !node.identifier;
+		let identifier = isAnonymous ? '' : generate(node.identifier, outerScope);
 
-	// 	if (node.isLocal) {
-	// 		funcScope = outerScope;
-	// 	} else {
-	// 		// Get global
-	// 		funcScope = outerScope;
-	// 		while (funcScope.__proto__ !== Object.prototype) { // Ugly
-	// 			funcScope = funcScope.__proto__;
-	// 		}
-	// 	}
+		let params = node.parameters.map((param, index) => {
+// console.log('PARAM', param);
+			let name = generate(param, scope);
+			return `scope.set('${name}', args[${index}]);`;
+		}).join('\n');
 
-	// 	let identifier = generate(node.identifier, funcScope, { initialising: true });
-	// 	let funcDef = `function ${identifier}(${parameters}){${scopeDef}\n${body}}`;
+		let body = this.Chunk(node, scope);
+		let funcDef = `function ${identifier}(...args){${scopeDef}\n${params}\n${body}}`;
 
-	// 	if (node.isLocal) {
-	// 		return `let ${identifier} = ${funcDef}`;
-	// 	} else {
-	// 		funcScope[identifier] = '__star._G';
-	// 		return `__star._G.set('${identifier}', ${funcDef})`;
-	// 	}
-	// },
+		if (isAnonymous) {
+			return funcDef;
+		} else if (node.isLocal) {
+			return `scope.set('${identifier}', ${funcDef})`;
+		} else {
+			return `__star.globalScope.set('${identifier}', ${funcDef})`;
+		}
+	},
 
 
 	Identifier(node, scope) {
-console.log('IDENTIFIER', node);
 		return node.name;
 	},
 
 
-	// IfClause(node, scope) {
-	// 	let condition = generate(node.condition, scope);
-	// 	let body = this.Chunk(node, scope);
-	// 	return `if (${condition}) {${body}}`;
-	// },
+	IfClause(node, scope) {
+		let condition = scoped(node.condition, scope);
+		let body = this.Chunk(node, scope);
+		return `if (${condition}) {\n${body}\n}`;
+	},
 
 
-	// IfStatement(node, scope) {
-	// 	let clauses = node.clauses.map((clause) => generate(clause, scope));
-	// 	return clauses.join (' else ');
-	// },
+	IfStatement(node, scope) {
+		let clauses = node.clauses.map((clause) => generate(clause, scope));
+		return clauses.join (' else ');
+	},
 
 
-	// LocalStatement(node, scope) {
-	// 	let assignments = [];
-	// 	let config = { initialising: true };
+	LocalStatement(node, scope) {
+		let assignments = node.variables.map((variable, index) => {
+			let name = generate(variable, scope);
+			return `scope.setLocal('${name}', __star_tmp[${index}])`;
+		}).join(';\n');
 
-	// 	node.variables.forEach((variable, index) => {
-	// 		let name = generate(variable, scope, config);
-	// 		let value = generate(node.init[index], scope);
-	// 		let match = name.match(/^(.*)\.get\('([^.]+)'\)$/);
+		let values = node.init.map((init, index) => {
+			let value = generate(init, scope);
+			if (init.type === 'CallExpression') {
+				value = `...${value}`;
+			}
+			return value;
+		}).join(', ');
 
-	// 		if (match) {
-	// 			let [_, subject, property] = match;
-	// 			assignments.push(`${subject}.set('${property}', ${value})`);
-	// 		} else {
-	// 			assignments.push(`let ${name}=${value}`);
-	// 		}
-	// 	});
-	// 	return assignments.join(';\n');
-	// },
+		return `__star_tmp = [${values}];${assignments}`;
+	},
 
 
-	// LogicalExpression(node, scope) {
-	// 	let left = generate(node.left, scope);
-	// 	let right = generate(node.right, scope);
-	// 	let operator = LOGICAL_OP_MAP[node.operator];
+	LogicalExpression(node, scope) {
+		let left = scoped(node.left, scope);
+		let right = scoped(node.right, scope);
+		let operator = LOGICAL_OP_MAP[node.operator];
 
-	// 	if (!operator) {
-	// 		console.log(node);
-	// 		throw new Error(`Unhandled logical operator: ${node.operator}`);
-	// 	}
+		if (!operator) {
+			console.info(node);
+			throw new Error(`Unhandled logical operator: ${node.operator}`);
+		}
 
-	// 	return `(${left} ${operator} ${right})`;
-	// },
+		return `(${left} ${operator} ${right})`;
+	},
 
 
-	// MemberExpression(node, scope) {
-	// 	console.assert(node.indexer === '.', 'Need to implement colon indexer!'); // TODO!!
+	MemberExpression(node, scope) {
+		console.assert(node.indexer === '.', 'Need to implement colon indexer!'); // TODO!!
 
-	// 	let base = generate(node.base, scope);
-	// 	let identifier = generate(node.identifier, scope, { isProperty: true });
-	// 	return `${base}.get('${identifier}')`;
-	// },
+		let base = generate(node.base, scope);
+		let identifier = generate(node.identifier, scope);
+		return `${base}.get('${identifier}')`;
+	},
+
+
+	NilLiteral(node) {
+		return 'undefined';
+	},
 
 
 	NumericLiteral(node) {
@@ -203,10 +197,10 @@ console.log('IDENTIFIER', node);
 	},
 
 
-	// ReturnStatement(node, scope) {
-	// 	let args = node.arguments.map((arg) => generate(arg, scope)).join(', ');
-	// 	return `return ${args};`;
-	// },
+	ReturnStatement(node, scope) {
+		let args = node.arguments.map((arg) => scoped(arg, scope)).join(', ');
+		return `return [${args}];`;
+	},
 
 
 	StringCallExpression(node, scope) {
@@ -222,32 +216,45 @@ console.log('IDENTIFIER', node);
 	},
 
 
-	// TableConstructorExpression(node, scope) {
-	// 	let fields = ''; //TODO!!!
-	// 	return `new __star.T({${fields}})`;
-	// },
+	TableConstructorExpression(node, scope) {
+		let fields = ''; //TODO!!!
+		return `new __star.T({${fields}})`;
+	},
 
 
 	UnaryExpression(node, scope) {
 		let operator = UNI_OP_MAP[node.operator];
-		let argument = generate(node.argument, scope);
+		let argument = scoped(node.argument, scope);
 		return `${operator}${argument}`;
 	}
 }
+
 
 let scopeIndex = 1;
 
 function extendScope(outerIndex) {
 	let scope = scopeIndex++;
-	let scopeDef = `let scope${scope} = scope${outerIndex}.extend(), scope = scope${scope};`;
+	let scopeDef = `let scope${scope} = scope${outerIndex}.extend(), scope = scope${scope};scope._index=${scope};`;
 	return { scope, scopeDef };
 }
 
-function getIdentifierInScope(node, scope) {
+
+function scoped(node, scope) {
 	let value = generate(node, scope);
-	let isIdentifier = node.type === 'Identifier';
-	return isIdentifier? `scope.get('${value}')` : value;
+	switch (node.type) {
+		case 'Identifier': 
+			return `scope.get('${value}')`;
+
+		case 'MemberExpression':
+			let [_, root, path, property] = value.match(/^([^.]+)\.(.*\.)?get\('([^.]+)'\)$/);
+			path = path || '';
+			return `scope.get('${root}').${path}get('${property}')`;
+
+		default: 
+			return value;
+	}
 }
+
 
 function generate(ast, scope, config) {
 	let generator = GENERATORS[ast.type];
@@ -260,8 +267,9 @@ function generate(ast, scope, config) {
 	return generator.call(GENERATORS, ast, scope, config);
 }
 
+
 export function generateJS(ast) {
-	let init = 'let scope0 = __star.globalScope, scope = scope0;\n';
+	let init = 'let scope0 = __star.globalScope, scope = scope0, __star_tmp;\n';
 	let user = generate(ast, 0);
 	return `${init}${user}`;
 }

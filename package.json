@@ -9,6 +9,7 @@
     "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",
     "gulp-concat": "^2.5.2",
+    "gulp-sourcemaps": "^1.5.2",
     "gulp-util": "^3.0.4",
     "luaparse": "^0.1.15",
     "through": "^2.3.7"
