@@ -1,8 +1,9 @@
 var Symbol = Symbol || { iterator: function () {} }; // Needed to get Babel to work in Node 
 
 const UNI_OP_MAP = {
-	'-': '-',
-	'not': '!'
+	'-': '-%1',
+	'not': '!%1',
+	'#': '__star.op.len(%1)'
 };
 
 const BIN_OP_MAP = {
@@ -13,7 +14,11 @@ const BIN_OP_MAP = {
 	'/': 'div',
 	'%': 'mod',
 	'==': 'eq',
-	'~=': 'neq'
+	'~=': 'neq',
+	'<': 'lt',
+	'>': 'gt',
+	'<=': 'lte',
+	'>=': 'gte',
 };
 
 const LOGICAL_OP_MAP = {
@@ -153,7 +158,7 @@ const GENERATORS = {
 		}).join(';\n');
 
 		let values = node.init.map((init, index) => {
-			let value = generate(init, scope);
+			let value = scoped(init, scope);
 			if (init.type === 'CallExpression') {
 				value = `...${value}`;
 			}
@@ -211,7 +216,7 @@ const GENERATORS = {
 
 
 	StringLiteral(node) {
-		let escaped = node.value.replace(/[\\"'\n]/g, '\\$&');
+		let escaped = node.value.replace(/["'\n]/g, '\\$&');
 		return `'${escaped}'`;
 	},
 
@@ -225,7 +230,13 @@ const GENERATORS = {
 	UnaryExpression(node, scope) {
 		let operator = UNI_OP_MAP[node.operator];
 		let argument = scoped(node.argument, scope);
-		return `${operator}${argument}`;
+
+		if (!operator) {
+			console.info(node);
+			throw new ReferenceError('Unhandled unary operator');
+		}
+
+		return operator.replace('%1', argument, 'g');
 	}
 }
 

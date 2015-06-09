@@ -1,5 +1,7 @@
 import { default as T } from './Table';
 import { coerceToNumber } from './utils';
+import { getn } from './lib/table';
+import { default as LuaError } from './LuaError';
 
 
 function binaryArithmetic (left, right, metaMethodName, callback) {
@@ -17,13 +19,76 @@ function binaryArithmetic (left, right, metaMethodName, callback) {
 }
 
 
+function equal(left, right) {
+	var mtb, mtc, f, result;
+
+	if (right !== left 
+		&& left && left instanceof T 
+		&& right && right instanceof T 
+		&& (mtl = left.metatable) 
+		&& (mtr = right.metatable) 
+		&& mtl === mtr 
+		&& (f = mtl.getMember('__eq'))
+	) {
+		return !!f(left, right)[0];
+	}
+
+	return (left === right);
+}
+
+
+function mod(left, right) {
+	if (
+		right === 0 
+		|| right === -Infinity 
+		|| right === Infinity 
+		|| global.isNaN(left) 
+		|| global.isNaN(right)
+	) {
+		return NaN;
+	}
+
+	let absRight = Math.abs(right);
+	let result = Math.abs(left) % absRight;
+
+	if (left * right < 0) result = absRight - result;
+	if (right < 0) result *= -1;
+
+	return result;
+}
+
+
+function len(value) {
+	let length, i;
+
+	if (value === undefined) throw new LuaError('attempt to get length of a nil value');
+	if (value instanceof T) return getn(value);
+	
+	if (typeof value == 'object') {
+		let length = 0;
+		for (let key in value) {
+			if (value.hasOwnProperty(key)) {
+				length++;
+			}
+		}
+		return length;
+	} 
+
+	return value.length;
+}
+
+
 export default {
 	concat(left, right) {
 		return `${left}${right}`;
 	},
 
 	eq(left, right) {
-		return left === right;
+		return equal(left, right);
+	},
+
+	neq(left, right) {
+		return !equal(left, right);
 	},
 
 	add(left, right) {
@@ -39,8 +104,33 @@ export default {
 	},
 
 	div(left, right) {
-		if (right === undefined) throw new shine.Error('attempt to perform arithmetic on a nil value');
+		if (right === undefined) throw new LuaError('attempt to perform arithmetic on a nil value');
 		return binaryArithmetic(left, right, '__div', (l, r) => l / r);
+	},
+
+	mod(left, right) {
+		return binaryArithmetic(left, right, '__mod', mod);
+	},
+
+	len(value) {
+		return len(value);
+	},
+	
+	lt(left, right) {
+		return binaryArithmetic(left, right, '__lt', (l, r) => l < r);
+	},
+	
+	lte(left, right) {
+		return binaryArithmetic(left, right, '__le', (l, r) => l <= r);
+	},
+	
+	gt(left, right) {
+		return !this.lte(left, right);
+	},
+	
+	gte(left, right) {
+		return !this.lt(left, right);
 	}
+	
 };
 

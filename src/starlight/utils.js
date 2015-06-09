@@ -1,4 +1,5 @@
 import { type } from './lib/globals';
+import { default as LuaError } from './LuaError';
 
 
 const FLOATING_POINT_PATTERN = /^[-+]?[0-9]*\.?([0-9]+([eE][-+]?[0-9]+)?)?$/;
@@ -24,11 +25,11 @@ export const stdout = {
 function throwCoerceError (val, errorMessage) {
 	if (!errorMessage) return;
 	errorMessage = ('' + errorMessage).replace(/\%type/gi, type(val));
-	throw new Error(errorMessage);
+	throw new LuaError(errorMessage);
 }
 
 export function coerceToNumber(val, errorMessage) {
-	var n, match, mantissa;
+	let n, match, mantissa;
 
 	switch (true) {
 		case typeof val == 'number': return val;

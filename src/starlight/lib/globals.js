@@ -1,5 +1,6 @@
 import { default as T } from '../Table';
 import { stdout } from '../utils';
+import { default as LuaError } from '../LuaError';
 
 
 
@@ -51,7 +52,7 @@ export function xpcall(func, err) {
 		success = false;
 	}
 
-	if (invalid) throw new Error('Attempt to call non-function');
+	if (invalid) throw new LuaError('Attempt to call non-function');
 	
 	if (!(result && result instanceof Array)) result = [result];
 	result.unshift(success);
@@ -60,18 +61,10 @@ export function xpcall(func, err) {
 }
 
 
-export const math = new T({
-	huge: Infinity
-});
-
-
-
 
 export default new T({
 	print,
 	tostring,
 	type,
 	xpcall,
-
-	math,
 });

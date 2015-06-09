@@ -82,63 +82,63 @@ assertTrue (result == 'failed3', 'Division of string value should error')
 
 
 
--- result = 5 % 3
--- assertTrue (result == 2, 'Modulo operator should return the remainder of the division of the two operands')
+result = 5 % 3
+assertTrue (result == 2, 'Modulo operator should return the remainder of the division of the two operands')
 
--- result = #'moo\0moo'
--- assertTrue (result == 7, 'Length operator should return the correct length of string with null character inside')
+result = #'moo\0moo'
+assertTrue (result == 7, 'Length operator should return the correct length of string with null character inside')
 
--- result = #'moo\0'
--- assertTrue (result == 4, 'Length operator should return the correct length of string with null character appended')
+result = #'moo\0'
+assertTrue (result == 4, 'Length operator should return the correct length of string with null character appended')
 
--- do
--- 	local a = 5
--- 	local b = 3
--- 	local c = 5.5
--- 	local d = 23
--- 	local e = 7
--- 	local f = 0
--- 	local g = 0 / 0 	-- nan
--- 	local h = math.huge
--- 	local i = -math.huge
+do
+	local a = 5
+	local b = 3
+	local c = 5.5
+	local d = 23
+	local e = 7
+	local f = 0
+	local g = 0 / 0 	-- nan
+	local h = math.huge
+	local i = -math.huge
 
 
--- 	assertEqual (a % b, 2, 'Modulo operator should return the remainder of the division of the two operands')
--- 	assertEqual (c % b, 2.5, 'Modulo operator should return the fraction part of the remainder of the division of the two operands')
--- 	assertEqual (-d % e, 5, 'Modulo operator should always return a positive number if the divisor is positive and wrap around if passed a negative dividend')
--- 	assertEqual (d % -e, -5, 'Modulo operator should always return a negative number if the divisor is negative')
--- 	assertEqual (-d % -e, -2, 'Modulo operator should always wrap around when passed a negative dividend')
+	assertEqual (a % b, 2, 'Modulo operator should return the remainder of the division of the two operands')
+	assertEqual (c % b, 2.5, 'Modulo operator should return the fraction part of the remainder of the division of the two operands')
+	assertEqual (-d % e, 5, 'Modulo operator should always return a positive number if the divisor is positive and wrap around if passed a negative dividend')
+	assertEqual (d % -e, -5, 'Modulo operator should always return a negative number if the divisor is negative')
+	assertEqual (-d % -e, -2, 'Modulo operator should always wrap around when passed a negative dividend')
 
--- 	assertEqual (d % f, g, 'Modulo operator should always return "nan" when passed zero as a divisor')
--- 	assertEqual (f % d, 0, 'Modulo operator should return zero when passed zero as a dividend (unless divisor == 0)')
--- 	assertEqual (f % f, g, 'Modulo operator should return "nan" when passed zero as a dividend and divisor')
--- 	assertEqual (d % g, g, 'Modulo operator should return "nan" when passed "nan" as a divisor')
--- 	assertEqual (g % d, g, 'Modulo operator should return "nan" when passed "nan" as a dividend')
--- 	assertEqual (d % h, g, 'Modulo operator should return "nan" when passed "inf" as a divisor')
--- 	assertEqual (h % d, g, 'Modulo operator should return "nan" when passed "inf" as a dividend')
--- 	assertEqual (d % i, g, 'Modulo operator should return "nan" when passed "-inf" as a divisor')
--- 	assertEqual (i % d, g, 'Modulo operator should return "nan" when passed "-inf" as a dividend')
+	assertEqual (d % f, g, 'Modulo operator should always return "nan" when passed zero as a divisor')
+	assertEqual (f % d, 0, 'Modulo operator should return zero when passed zero as a dividend (unless divisor == 0)')
+	assertEqual (f % f, g, 'Modulo operator should return "nan" when passed zero as a dividend and divisor')
+	assertEqual (d % g, g, 'Modulo operator should return "nan" when passed "nan" as a divisor')
+	assertEqual (g % d, g, 'Modulo operator should return "nan" when passed "nan" as a dividend')
+	assertEqual (d % h, g, 'Modulo operator should return "nan" when passed "inf" as a divisor')
+	assertEqual (h % d, g, 'Modulo operator should return "nan" when passed "inf" as a dividend')
+	assertEqual (d % i, g, 'Modulo operator should return "nan" when passed "-inf" as a divisor')
+	assertEqual (i % d, g, 'Modulo operator should return "nan" when passed "-inf" as a dividend')
 
--- end
+end
 
--- assertTrue (a == a, 'Equality operator should return true if first operand is equal to second')
--- assertTrue (not (a == b), 'Equality operator should return false if first operand is not equal to second')
+assertTrue (a == a, 'Equality operator should return true if first operand is equal to second')
+assertTrue (not (a == b), 'Equality operator should return false if first operand is not equal to second')
 
--- assertTrue (a < b, 'Less than should return true if first operand is less than second')
--- assertTrue (not (a < a), 'Less than should return false if first operand is equal to second')
--- assertTrue (not (b < a), 'Less than should return false if first operand is greater than second')
+assertTrue (a < b, 'Less than should return true if first operand is less than second')
+assertTrue (not (a < a), 'Less than should return false if first operand is equal to second')
+assertTrue (not (b < a), 'Less than should return false if first operand is greater than second')
 
--- assertTrue (b > a, 'Greater than should return true if first operand is Greater than second')
--- assertTrue (not (a > a), 'Greater than should return false if first operand is equal to second')
--- assertTrue (not (a > b), 'Greater than should return false if first operand is less than second')
+assertTrue (b > a, 'Greater than should return true if first operand is Greater than second')
+assertTrue (not (a > a), 'Greater than should return false if first operand is equal to second')
+assertTrue (not (a > b), 'Greater than should return false if first operand is less than second')
 
--- assertTrue (a <= b, 'Less than or equal to should return true if first operand is less than second')
--- assertTrue (a <= a, 'Less than or equal to should return true if first operand is equal to second')
--- assertTrue (not (b <= a), 'Less than or equal to should return false if first operand is greater than second')
+assertTrue (a <= b, 'Less than or equal to should return true if first operand is less than second')
+assertTrue (a <= a, 'Less than or equal to should return true if first operand is equal to second')
+assertTrue (not (b <= a), 'Less than or equal to should return false if first operand is greater than second')
 
--- assertTrue (b >= a, 'Greater than or equal to should return true if first operand is Greater than second')
--- assertTrue (a >= a, 'Greater than or equal to should return true if first operand is equal to second')
--- assertTrue (not (a >= b), 'Greater than or equal to should return false if first operand is less than second')
+assertTrue (b >= a, 'Greater than or equal to should return true if first operand is Greater than second')
+assertTrue (a >= a, 'Greater than or equal to should return true if first operand is equal to second')
+assertTrue (not (a >= b), 'Greater than or equal to should return false if first operand is less than second')
 
 -- local t = true
 -- local f = false
