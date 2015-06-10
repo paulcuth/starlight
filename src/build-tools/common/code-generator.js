@@ -83,7 +83,12 @@ const GENERATORS = {
 	CallExpression(node, scope) {
 		let functionName = generate(node.base, scope);
 		let args = node.arguments.map((arg) => scoped(arg, scope)).join(', ');
-		return `scope.get('${functionName}')(${args})`;
+
+		if (node.base.type === 'CallExpression') {
+			return `${functionName}[0](${args})`;
+		} else {
+			return `scope.get('${functionName}')(${args})`;
+		}
 	},
 
 
@@ -146,9 +151,12 @@ const GENERATORS = {
 		let identifier = isAnonymous ? '' : generate(node.identifier, outerScope);
 
 		let params = node.parameters.map((param, index) => {
-// console.log('PARAM', param);
 			let name = generate(param, scope);
-			return `scope.set('${name}', args[${index}]);`;
+			if (name === '...scope.varargs') {
+				return `scope.varargs = args.slice(${index})`;
+			} else {
+				return `scope.set('${name}', args[${index}]);`;
+			}
 		}).join('\n');
 
 		let body = this.Chunk(node, scope);
@@ -242,7 +250,12 @@ const GENERATORS = {
 	StringCallExpression(node, scope) {
 		let functionName = generate(node.base, scope);
 		let arg = generate(node.argument, scope);
-		return `scope.get('${functionName}')(${arg})`;
+
+		if (node.base.type === 'CallExpression') {
+			return `${functionName}(${arg})`;
+		} else {
+			return `scope.get('${functionName}')(${arg})`;
+		}
 	},
 
 
@@ -282,6 +295,11 @@ const GENERATORS = {
 		}
 
 		return `__star.op.${operator}(${argument})`;
+	},
+
+	
+	VarargLiteral(node, scope) {
+		return '...scope.varargs';
 	}
 }
 
