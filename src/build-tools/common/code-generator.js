@@ -1,9 +1,9 @@
 var Symbol = Symbol || { iterator: function () {} }; // Needed to get Babel to work in Node 
 
 const UNI_OP_MAP = {
-	'-': '-%1',
-	'not': '!%1',
-	'#': '__star.op.len(%1)'
+	'-': 'unm',
+	'not': 'not',
+	'#': 'len'
 };
 
 const BIN_OP_MAP = {
@@ -19,6 +19,7 @@ const BIN_OP_MAP = {
 	'>': 'gt',
 	'<=': 'lte',
 	'>=': 'gte',
+	'^': 'pow'
 };
 
 const LOGICAL_OP_MAP = {
@@ -32,18 +33,26 @@ const GENERATORS = {
 	AssignmentStatement(node, scope) {
 		let assignments = node.variables.map((variable, index) => {
 			let name = scoped(variable, scope);
-			let value = generate(node.init[index], scope);
 			let match = name.match(/^(.*).get\('([^.]+)'\)$/);
 
 			if (match) {
 				let [_, subject, property] = match;
-				return `${subject}.set('${property}', ${value})`;
+				return `${subject}.set('${property}', __star_tmp[${index}])`;
 			} else {
 				console.info(name);
 				throw new Error('Unhandled'); // TODO: Remove
 			}
-		});
-		return assignments.join(';\n');
+		}).join(';\n');
+
+		let values = node.init.map((init, index) => {
+			let value = scoped(init, scope);
+			if (init.type === 'CallExpression') {
+				value = `...${value}`;
+			}
+			return value;
+		}).join(', ');
+
+		return `__star_tmp = [${values}];${assignments}`;
 	},
 
 
@@ -58,6 +67,11 @@ const GENERATORS = {
 		}
 
 		return `__star.op.${operator}(${left}, ${right})`;
+	},
+
+
+	BooleanLiteral(node) {
+		return node.value ? 'true' : 'false';
 	},
 
 
@@ -109,6 +123,23 @@ const GENERATORS = {
 	},
 
 
+	ForGenericStatement(node, outerScope) {
+		console.assert(node.iterators.length === 1, 'Only one iterator is assumed. Need to implement more!');
+		let { scope, scopeDef } = extendScope(outerScope);
+		let iterator = scoped(node.iterators[0], outerScope);
+		let body = this.Chunk(node, scope);
+
+		let variables = node.variables.map((variable, index) => {
+			let name = generate(variable, scope);
+			return `scope.set('${name}', __star_tmp[${index}])`;
+		}).join(';\n');
+
+		let defs = scopeDef.split(', ');
+		return `${defs[0]};\n[scope${scope}._iterator, scope${scope}._table, scope${scope}._next] = ${iterator};\nwhile((__star_tmp = scope${scope}._iterator(scope${scope}._table, scope${scope}._next)).length) {\nlet ${defs[1]}\nscope${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
+
+	},
+
+
 	FunctionDeclaration(node, outerScope) {
 		let { scope, scopeDef } = extendScope(outerScope);
 		let isAnonymous = !node.identifier;
@@ -141,7 +172,7 @@ const GENERATORS = {
 	IfClause(node, scope) {
 		let condition = scoped(node.condition, scope);
 		let body = this.Chunk(node, scope);
-		return `if (${condition}) {\n${body}\n}`;
+		return `if (__star.op.bool(${condition})) {\n${body}\n}`;
 	},
 
 
@@ -222,8 +253,22 @@ const GENERATORS = {
 
 
 	TableConstructorExpression(node, scope) {
-		let fields = ''; //TODO!!!
-		return `new __star.T({${fields}})`;
+		let fields = node.fields.map(field => generate(field, scope)).join(';\n');
+		return `new __star.T(function () {${fields}})`;
+	},
+
+
+	TableKeyString(node, scope) {
+		let name = generate(node.key, scope);
+		let value = scoped(node.value, scope);
+		return `this.set('${name}', ${value})`;
+	},
+
+
+	TableKey(node, scope) {
+		let name = generate(node.key, scope);
+		let value = scoped(node.value, scope);
+		return `this.set(${name}, ${value})`;
 	},
 
 
@@ -233,10 +278,10 @@ const GENERATORS = {
 
 		if (!operator) {
 			console.info(node);
-			throw new ReferenceError('Unhandled unary operator');
+			throw new Error(`Unhandled unary operator: ${node.operator}`);
 		}
 
-		return operator.replace('%1', argument, 'g');
+		return `__star.op.${operator}(${argument})`;
 	}
 }
 
@@ -245,7 +290,7 @@ let scopeIndex = 1;
 
 function extendScope(outerIndex) {
 	let scope = scopeIndex++;
-	let scopeDef = `let scope${scope} = scope${outerIndex}.extend(), scope = scope${scope};scope._index=${scope};`;
+	let scopeDef = `let scope${scope} = scope${outerIndex}.extend(), scope = scope${scope};`;
 	return { scope, scopeDef };
 }
 

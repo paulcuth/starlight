@@ -1,4 +1,6 @@
 
+
+
 do
 	local passed, failed = 0, 0
 
@@ -140,88 +142,87 @@ assertTrue (b >= a, 'Greater than or equal to should return true if first operan
 assertTrue (a >= a, 'Greater than or equal to should return true if first operand is equal to second')
 assertTrue (not (a >= b), 'Greater than or equal to should return false if first operand is less than second')
 
--- local t = true
--- local f = false
--- local n
+local t = true
+local f = false
+local n
 
--- assertTrue (t, 'True should be true')
--- assertTrue (0, '0 should coerce to true')
--- assertTrue (1, '1 should coerce to true')
--- assertTrue ('moo', 'A string should coerce to true')
--- assertTrue ('', 'An empty string should coerce to true')
--- assertTrue ({}, 'An empty table should coerce to true')
+assertTrue (t, 'True should be true')
+assertTrue (0, '0 should coerce to true')
+assertTrue (1, '1 should coerce to true')
+assertTrue ('moo', 'A string should coerce to true')
+assertTrue ('', 'An empty string should coerce to true')
+assertTrue ({}, 'An empty table should coerce to true')
 
--- assertTrue (not f, 'False should coerce to false')
--- assertTrue (not n, 'nil should coerce to false')
-
-
--- assertTrue (t and t, 'And operator should return true if both operands are true')
--- assertTrue (not (f and t), 'And operator should return false if first operand is false')
--- assertTrue (not (t and f), 'And operator should return false if second operand is false')
--- assertTrue (not (f and f), 'And operator should return false if both operands are false')
-
--- assertTrue (t or t, 'Or operator should return true if both operands are true')
--- assertTrue (f or t, 'Or operator should return true even if first operand is false')
--- assertTrue (t or f, 'Or operator should return true even if second operand is false')
--- assertTrue (not (f or f), 'Or operator should return false if both operands are false')
+assertTrue (not f, 'False should coerce to false')
+assertTrue (not n, 'nil should coerce to false')
 
 
+assertTrue (t and t, 'And operator should return true if both operands are true')
+assertTrue (not (f and t), 'And operator should return false if first operand is false')
+assertTrue (not (t and f), 'And operator should return false if second operand is false')
+assertTrue (not (f and f), 'And operator should return false if both operands are false')
 
--- local tests = {
--- 	addition = function (a, b) return a + b end,
--- 	subtraction = function (a, b) return a - b end,
--- 	muliplication = function (a, b) return a * b end,
--- 	division = function (a, b) return a / b end,
--- 	modulus = function (a, b) return a % b end,
--- 	pow = function (a, b) return a ^ b end,
--- 	['unary-minus'] = function (a, b) return -a, -b end
--- }
+assertTrue (t or t, 'Or operator should return true if both operands are true')
+assertTrue (f or t, 'Or operator should return true even if first operand is false')
+assertTrue (t or f, 'Or operator should return true even if second operand is false')
+assertTrue (not (f or f), 'Or operator should return false if both operands are false')
 
--- for name, test in pairs(tests) do
 
--- 	local success, result = pcall (test, 5, 2)
--- 	assertTrue (success, 'Simple use of '..name..' operator should not fail')
+
+local tests = {
+	addition = function (a, b) return a + b end,
+	subtraction = function (a, b) return a - b end,
+	muliplication = function (a, b) return a * b end,
+	division = function (a, b) return a / b end,
+	modulus = function (a, b) return a % b end,
+	pow = function (a, b) return a ^ b end,
+	['unary-minus'] = function (a, b) return -a, -b end
+}
+
+for name, test in pairs(tests) do
+	local success, result = pcall (test, 5, 2)
+	assertTrue (success, 'Simple use of '..name..' operator should not fail')
 	
--- 	success, result = pcall (test, '3', 6)
--- 	assertTrue (success, 'Applying '..name..' operator to a string containing a number should not error [1]')
+	success, result = pcall (test, '3', 6)
+	assertTrue (success, 'Applying '..name..' operator to a string containing a number should not error [1]')
 	
--- 	success, result = pcall (test, '3.', 9)
--- 	assertTrue (success, 'Applying '..name..' operator to a string containing a number should not error [2]')
+	success, result = pcall (test, '3.', 9)
+	assertTrue (success, 'Applying '..name..' operator to a string containing a number should not error [2]')
 	
--- 	success, result = pcall (test, '3.2', 9)
--- 	assertTrue (success, 'Applying '..name..' operator to a string containing a number should not error [3]')
+	success, result = pcall (test, '3.2', 9)
+	assertTrue (success, 'Applying '..name..' operator to a string containing a number should not error [3]')
 	
--- 	success, result = pcall (test, '3.2e4', 9)
--- 	assertTrue (success, 'Applying '..name..' operator to a string containing an exponenial number should not error [4]')
+	success, result = pcall (test, '3.2e4', 9)
+	assertTrue (success, 'Applying '..name..' operator to a string containing an exponenial number should not error [4]')
 	
--- 	success, result = pcall (test, 8, '2')
--- 	assertTrue (success, 'Passing a string containing a number to the '..name..' operator should not error [1]')
+	success, result = pcall (test, 8, '2')
+	assertTrue (success, 'Passing a string containing a number to the '..name..' operator should not error [1]')
 	
--- 	success, result = pcall (test, 1, '2.')
--- 	assertTrue (success, 'Passing a string containing a number to the '..name..' operator should not error [2]')
+	success, result = pcall (test, 1, '2.')
+	assertTrue (success, 'Passing a string containing a number to the '..name..' operator should not error [2]')
 	
--- 	success, result = pcall (test, 1, '2.5')
--- 	assertTrue (success, 'Passing a string containing a number to the '..name..' operator should not error [3]')
+	success, result = pcall (test, 1, '2.5')
+	assertTrue (success, 'Passing a string containing a number to the '..name..' operator should not error [3]')
 	
--- 	success, result = pcall (test, 1, '2.5e3')
--- 	assertTrue (success, 'Passing a string containing an exponential number to the '..name..' operator should not error [4]')
+	success, result = pcall (test, 1, '2.5e3')
+	assertTrue (success, 'Passing a string containing an exponential number to the '..name..' operator should not error [4]')
 	
--- 	success, result = pcall (test, '9', '2')
--- 	assertTrue (success, 'Applying '..name..' operator to two strings containing a numbers should not error')
+	success, result = pcall (test, '9', '2')
+	assertTrue (success, 'Applying '..name..' operator to two strings containing a numbers should not error')
 	
--- 	success, result = pcall (test, 'a', 2)
--- 	assertTrue (not success, 'Applying '..name..' operator to an alpha string should error [1]')
+	success, result = pcall (test, 'a', 2)
+	assertTrue (not success, 'Applying '..name..' operator to an alpha string should error [1]')
 	
--- 	success, result = pcall (test, '8a', 2)
--- 	assertTrue (not success, 'Applying '..name..' operator to an alpha string should error [2]')
+	success, result = pcall (test, '8a', 2)
+	assertTrue (not success, 'Applying '..name..' operator to an alpha string should error [2]')
 	
--- 	success, result = pcall (test, 'a8', 2)
--- 	assertTrue (not success, 'Applying '..name..' operator to an alpha string should error [3]')
+	success, result = pcall (test, 'a8', 2)
+	assertTrue (not success, 'Applying '..name..' operator to an alpha string should error [3]')
 	
--- 	success, result = pcall (test, 8, '2a')
--- 	assertTrue (not success, 'Passing an alpha string to the '..name..' operator should error')
+	success, result = pcall (test, 8, '2a')
+	assertTrue (not success, 'Passing an alpha string to the '..name..' operator should error')
 	
--- end
+end
 
 
 

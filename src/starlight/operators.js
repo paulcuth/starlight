@@ -1,5 +1,5 @@
 import { default as T } from './Table';
-import { coerceToNumber } from './utils';
+import { coerceToNumber, coerceToBoolean } from './utils';
 import { getn } from './lib/table';
 import { default as LuaError } from './LuaError';
 
@@ -78,6 +78,21 @@ function len(value) {
 }
 
 
+function unaryMinus(value) {
+	var mt, f, result;
+
+	if (value && value instanceof T && (mt = value.metatable) && (f = mt.get('__unm'))) {
+		return f(value)[0];
+	}
+
+	if (typeof value !== 'number') {
+		value = coerceToNumber(value, 'attempt to perform arithmetic on a %type value');
+	}
+
+	return -value;
+}
+
+
 export default {
 	concat(left, right) {
 		return `${left}${right}`;
@@ -112,6 +127,10 @@ export default {
 		return binaryArithmetic(left, right, '__mod', mod);
 	},
 
+	pow(left, right) {
+		return binaryArithmetic(left, right, '__pow', Math.pow);
+	},
+
 	len(value) {
 		return len(value);
 	},
@@ -130,7 +149,18 @@ export default {
 	
 	gte(left, right) {
 		return !this.lt(left, right);
-	}
-	
+	},
+
+	bool(value) {
+		return coerceToBoolean(value);
+	},
+
+	unm(value) {
+		return unaryMinus(value);
+	},
+
+	not(value) {
+		return !coerceToBoolean(value);
+	}	
 };
 

@@ -1,10 +1,12 @@
 import { default as Scope } from './Scope';
 import { default as globals } from './lib/globals';
 import { default as operators } from './operators';
+import { default as Table } from './Table';
 
-export const globalScope = new Scope(globals);
+export const globalScope = new Scope(globals.strValues);
 export const _G = globals;
 export const op = operators;
+export const T = Table;
 
 
 // The following should be configurable
