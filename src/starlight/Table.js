@@ -16,7 +16,7 @@ export default class Table {
 		if (!initialiser) {
 			// noop
 		} else if (typeof initialiser === 'function') {
-			initialiser.call(this);
+			initialiser(this);
 		} else {
 			let isArr = initialiser instanceof Array;
 
@@ -61,7 +61,7 @@ export default class Table {
 		}
 		
 		let mt, mm;
-		if ((mt = this.metatable) && (mm = mt.__index)) {
+		if ((mt = this.metatable) && (mm = mt.get('__index'))) {
 			switch (mm.constructor) {
 				case Table: return mm.get(key);
 				case Function:
@@ -97,9 +97,9 @@ export default class Table {
 		}
 
 		// TODO: Refactor the block above into this if statement..
-		if (oldValue === undefined && mt && mt.__newindex) {
+		if (oldValue === undefined && mt && mt.get('__newindex')) {
 			switch (mt.__newindex.constructor) {
-				case Table: return mt.__newindex.set(key, value);
+				case Table: return mt.get('__newindex').set(key, value);
 				case Function: return mt.__newindex(this, key, value);
 			}
 		}
@@ -125,5 +125,9 @@ export default class Table {
 		}
 	}
 
+
+	insert(...values) {
+		this.numValues.push(...values);
+	}
 
 };

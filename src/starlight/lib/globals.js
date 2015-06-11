@@ -3,6 +3,10 @@ import { default as LuaError } from '../LuaError';
 import { stdout } from '../utils';
 
 
+export function error(message) {
+	throw new LuaError(message);	
+}
+
 
 export function next(table, index) {
 	// SLOOOOOOOW...
@@ -108,6 +112,25 @@ export function print(...args) {
 }
 
 
+export function setmetatable(table, metatable) {
+	if (!(table && table instanceof T)) {
+		throw new LuaError('Bad argument #1 in setmetatable(). Table expected');
+	}
+
+	if (!(metatable === undefined || (metatable && metatable instanceof T))) {
+		throw new LuaError('Bad argument #2 in setmetatable(). Nil or table expected');
+	}
+
+	let mt;
+	if ((mt = table.metatable) && (mt = mt.__metatable)) {
+		throw new LuaError('cannot change a protected metatable');
+	}
+
+	table.metatable = metatable;
+	return table;
+}
+
+
 export function tostring(x) {
 	return `${x}`;
 }
@@ -162,10 +185,12 @@ export function xpcall(func, err) {
 
 
 export default new T({
+	error,
 	next,
 	pairs,
 	pcall,
 	print,
+	setmetatable,
 	tostring,
 	type,
 	xpcall,

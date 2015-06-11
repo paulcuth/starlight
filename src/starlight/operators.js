@@ -20,7 +20,7 @@ function binaryArithmetic (left, right, metaMethodName, callback) {
 
 
 function equal(left, right) {
-	var mtb, mtc, f, result;
+	var mtl, mtr, f, result;
 
 	if (right !== left 
 		&& left && left instanceof T 

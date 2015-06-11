@@ -2,7 +2,7 @@ import { default as T } from '../Table';
 import { default as LuaError } from '../LuaError';
 
 
-export function getn(value) {
+export function getn(table) {
 	if (!(table && table instanceof T)) {
 		throw new LuaError("Bad argument #1 in 'getn' (table expected)");
 	}

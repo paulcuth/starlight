@@ -33,11 +33,11 @@ const GENERATORS = {
 	AssignmentStatement(node, scope) {
 		let assignments = node.variables.map((variable, index) => {
 			let name = scoped(variable, scope);
-			let match = name.match(/^(.*).get\('([^.]+)'\)$/);
+			let match = name.match(/^(.*).get\(([^.]+)\)$/);
 
 			if (match) {
 				let [_, subject, property] = match;
-				return `${subject}.set('${property}', __star_tmp[${index}])`;
+				return `${subject}.set(${property}, __star_tmp[${index}])`;
 			} else {
 				console.info(name);
 				throw new Error('Unhandled'); // TODO: Remove
@@ -46,7 +46,7 @@ const GENERATORS = {
 
 		let values = node.init.map((init, index) => {
 			let value = scoped(init, scope);
-			if (init.type === 'CallExpression') {
+			if (isCallExpression(init)) {
 				value = `...${value}`;
 			}
 			return value;
@@ -60,6 +60,14 @@ const GENERATORS = {
 		let left = scoped(node.left, scope);
 		let right = scoped(node.right, scope);
 		let operator = BIN_OP_MAP[node.operator];
+
+		if (isCallExpression(node.left)) {
+			left += '[0]';
+		}
+
+		if (isCallExpression(node.right)) {
+			right += '[0]';
+		}
 
 		if (!operator) {
 			console.info(node);
@@ -81,13 +89,17 @@ const GENERATORS = {
 
 
 	CallExpression(node, scope) {
-		let functionName = generate(node.base, scope);
-		let args = node.arguments.map((arg) => scoped(arg, scope)).join(', ');
+		let functionName = scoped(node.base, scope);
+		let args = node.arguments.map((arg) => scoped(arg, scope));
 
-		if (node.base.type === 'CallExpression') {
+		if (isCallExpression(node.base)) {
 			return `${functionName}[0](${args})`;
 		} else {
-			return `scope.get('${functionName}')(${args})`;
+			if (node.base.type === 'MemberExpression' && node.base.indexer === ':') {
+				let [, subject] = [].concat(functionName.match(/^(.*)\.get\('.*?'\)$/))
+				args.unshift(subject);
+			}
+			return `${functionName}(${args})`;
 		}
 	},
 
@@ -148,24 +160,40 @@ const GENERATORS = {
 	FunctionDeclaration(node, outerScope) {
 		let { scope, scopeDef } = extendScope(outerScope);
 		let isAnonymous = !node.identifier;
+		let isMemberExpr = !isAnonymous && node.identifier.type === 'MemberExpression';
 		let identifier = isAnonymous ? '' : generate(node.identifier, outerScope);
 
 		let params = node.parameters.map((param, index) => {
 			let name = generate(param, scope);
 			if (name === '...scope.varargs') {
-				return `scope.varargs = args.slice(${index})`;
+				return `scope.varargs = args`;
 			} else {
-				return `scope.set('${name}', args[${index}]);`;
+				return `scope.set('${name}', args.shift())`;
 			}
-		}).join('\n');
+		});
 
+		let name, subject, property;
+		if (isMemberExpr) {
+			[, subject, property] = [].concat(identifier.match(/^(.*)\.get\('(.*?)'\)$/))
+			name = property;
+
+			if (node.identifier.indexer === ':') {
+				params.unshift("scope.set('self', args.shift())");
+			}
+		} else {
+			name = identifier;
+		}
+
+		let paramStr = params.join(';\n');
 		let body = this.Chunk(node, scope);
-		let funcDef = `function ${identifier}(...args){${scopeDef}\n${params}\n${body}}`;
+		let funcDef = `function $${name}(...args){${scopeDef}\n${paramStr}\n${body}}`;
 
 		if (isAnonymous) {
 			return funcDef;
 		} else if (node.isLocal) {
 			return `scope.set('${identifier}', ${funcDef})`;
+		} else if (isMemberExpr) {
+			return `scope.get('${subject}').set('${property}', ${funcDef})`;
 		} else {
 			return `__star.globalScope.set('${identifier}', ${funcDef})`;
 		}
@@ -190,6 +218,18 @@ const GENERATORS = {
 	},
 
 
+	IndexExpression(node, scope) {
+		let base = scoped(node.base, scope);
+		let index = scoped(node.index, scope);
+
+		if (isCallExpression(node.index)) {
+			index += '[0]';
+		}
+
+		return `${base}.get(${index})`;
+	},
+
+
 	LocalStatement(node, scope) {
 		let assignments = node.variables.map((variable, index) => {
 			let name = generate(variable, scope);
@@ -198,7 +238,7 @@ const GENERATORS = {
 
 		let values = node.init.map((init, index) => {
 			let value = scoped(init, scope);
-			if (init.type === 'CallExpression') {
+			if (isCallExpression(init)) {
 				value = `...${value}`;
 			}
 			return value;
@@ -223,8 +263,6 @@ const GENERATORS = {
 
 
 	MemberExpression(node, scope) {
-		console.assert(node.indexer === '.', 'Need to implement colon indexer!'); // TODO!!
-
 		let base = generate(node.base, scope);
 		let identifier = generate(node.identifier, scope);
 		return `${base}.get('${identifier}')`;
@@ -248,13 +286,17 @@ const GENERATORS = {
 
 
 	StringCallExpression(node, scope) {
-		let functionName = generate(node.base, scope);
-		let arg = generate(node.argument, scope);
+		let functionName = scoped(node.base, scope);
+		let args = [generate(node.argument, scope)];
 
-		if (node.base.type === 'CallExpression') {
-			return `${functionName}(${arg})`;
+		if (isCallExpression(node.base)) {
+			return `${functionName}[0](${args})`;
 		} else {
-			return `scope.get('${functionName}')(${arg})`;
+			if (node.base.type === 'MemberExpression' && node.base.indexer === ':') {
+				let [, subject] = [].concat(functionName.match(/^(.*)\.get\('.*?'\)$/))
+				args.unshift(subject);
+			}
+			return `${functionName}(${args})`;
 		}
 	},
 
@@ -265,29 +307,56 @@ const GENERATORS = {
 	},
 
 
+	TableCallExpression(node, scope) {
+		let functionName = scoped(node.base, scope);
+		let args = [generate(node.arguments, scope)];
+
+		if (isCallExpression(node.base)) {
+			return `${functionName}[0](${args})`;
+		} else {
+			if (node.base.type === 'MemberExpression' && node.base.indexer === ':') {
+				let [, subject] = [].concat(functionName.match(/^(.*)\.get\('.*?'\)$/))
+				args.unshift(subject);
+			}
+			return `${functionName}(${args})`;
+		}
+	},
+
+
 	TableConstructorExpression(node, scope) {
 		let fields = node.fields.map(field => generate(field, scope)).join(';\n');
-		return `new __star.T(function () {${fields}})`;
+		return `new __star.T(t => {${fields}})`;
 	},
 
 
 	TableKeyString(node, scope) {
 		let name = generate(node.key, scope);
 		let value = scoped(node.value, scope);
-		return `this.set('${name}', ${value})`;
+		return `t.set('${name}', ${value})`;
 	},
 
 
 	TableKey(node, scope) {
 		let name = generate(node.key, scope);
 		let value = scoped(node.value, scope);
-		return `this.set(${name}, ${value})`;
+		return `t.set(${name}, ${value})`;
+	},
+
+
+	TableValue(node, scope) {
+		let value = scoped(node.value, scope);
+		let operator = isCallExpression(node.value) ? '...' : '';
+		return `t.insert(${operator}${value})`;
 	},
 
 
 	UnaryExpression(node, scope) {
 		let operator = UNI_OP_MAP[node.operator];
 		let argument = scoped(node.argument, scope);
+
+		if (isCallExpression(node.argument)) {
+			argument += '[0]';
+		}
 
 		if (!operator) {
 			console.info(node);
@@ -327,6 +396,11 @@ function scoped(node, scope) {
 		default: 
 			return value;
 	}
+}
+
+
+function isCallExpression(node) {
+	return !!node.type.match(/CallExpression$/);
 }
 
 
