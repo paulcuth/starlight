@@ -3,8 +3,27 @@ import { default as LuaError } from '../LuaError';
 import { stdout } from '../utils';
 
 
+function ipairsIterator(table, index) {
+	if (index === undefined) {
+		throw new LuaError('Bad argument #2 to ipairs() iterator');
+	}
+
+	var nextIndex = index + 1,
+		numValues = table.numValues;
+
+	if (!numValues.hasOwnProperty(nextIndex) || numValues[nextIndex] === void 0) return void 0;
+	return [nextIndex, numValues[nextIndex]];
+}
+
+
 export function error(message) {
 	throw new LuaError(message);	
+}
+
+
+export function ipairs(table) {
+	if (!(table && table instanceof T)) throw new LuaError('Bad argument #1 in ipairs(). Table expected');
+	return [ipairsIterator, table, 0];
 }
 
 
@@ -178,7 +197,7 @@ export function xpcall(func, err) {
 	
 	if (!(result && result instanceof Array)) result = [result];
 	result.unshift(success);
-	
+
 	return result;
 }
 
@@ -186,6 +205,7 @@ export function xpcall(func, err) {
 
 export default new T({
 	error,
+	ipairs,
 	next,
 	pairs,
 	pcall,

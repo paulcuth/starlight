@@ -77,7 +77,7 @@ export default class Table {
 		let typ = typeof key,
 			mt = this.metatable,
 			positiveIntegerKey = key > 0 && key == key >> 0,
-			oldValue;
+			keys, index, oldValue;
 
 		switch (typ) {
 			case 'string':
@@ -130,4 +130,13 @@ export default class Table {
 		this.numValues.push(...values);
 	}
 
+
+	toString() {
+		let mt = this.metatable;
+		if (mt && mt.__tostring) {
+			return mt.__tostring(this)[0];
+		} else {
+			return 'table: 0x' + this.index.toString(16);
+		}
+	}
 };

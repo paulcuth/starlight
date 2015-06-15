@@ -1,5 +1,9 @@
 var Symbol = Symbol || { iterator: function () {} }; // Needed to get Babel to work in Node 
 
+let scopeIndex = 1;
+let functionIndex = 0;
+let forLoopIndex = 0;
+
 const UNI_OP_MAP = {
 	'-': 'unm',
 	'not': 'not',
@@ -32,15 +36,25 @@ const GENERATORS = {
 
 	AssignmentStatement(node, scope) {
 		let assignments = node.variables.map((variable, index) => {
-			let name = scoped(variable, scope);
-			let match = name.match(/^(.*).get\(([^.]+)\)$/);
-
-			if (match) {
-				let [_, subject, property] = match;
-				return `${subject}.set(${property}, __star_tmp[${index}])`;
+			let name;
+			if (isLookupExpression(variable)) {
+				name = generate(variable, scope, { set: `__star_tmp[${index}]` });
+				let [, root, accessor] = [].concat(name.match(/^([^.]+)(.*)$/));
+				if (root === 'scope') {
+					return name;
+				} else {
+					return `scope.get('${root}')${accessor}`;
+				}
 			} else {
-				console.info(name);
-				throw new Error('Unhandled'); // TODO: Remove
+				name = scoped(variable, scope);
+				let [match, subject, property] = [].concat(name.match(/^(.*).get\(([^.]+)\)$/));
+
+				if (match) {
+					return `${subject}.set(${property}, __star_tmp[${index}])`;
+				} else {
+					console.info(name);
+					throw new Error('Unhandled'); // TODO: Remove
+				}
 			}
 		}).join(';\n');
 
@@ -93,14 +107,16 @@ const GENERATORS = {
 		let args = node.arguments.map((arg) => scoped(arg, scope));
 
 		if (isCallExpression(node.base)) {
-			return `${functionName}[0](${args})`;
+			args.unshift(`${functionName}[0]`);
 		} else {
 			if (node.base.type === 'MemberExpression' && node.base.indexer === ':') {
 				let [, subject] = [].concat(functionName.match(/^(.*)\.get\('.*?'\)$/))
 				args.unshift(subject);
 			}
-			return `${functionName}(${args})`;
+			args.unshift(`${functionName}`);
 		}
+
+		return `__star.call(${args})`;
 	},
 
 
@@ -131,12 +147,14 @@ const GENERATORS = {
 		let step = node.step === null ? 1 : generate(node.step, outerScope);
 		let operator = start < end ? '<=' : '>=';
 		let body = this.Chunk(node, scope);
+		let loopIndex = ++forLoopIndex;
 
-		let defs = scopeDef.split(', ');
-		let init = `scope${scope}.set('${variableName}', ${start})`;
-		let cond = `scope${scope}.get('${variableName}') ${operator} ${end}`;
-		let after = `scope${scope}.add('${variableName}', ${step})`;
-		return `${defs[0]};\nfor (${init}; ${cond}; ${after}) {\nlet ${defs[1]}\n${body}\n}`;
+		// let defs = scopeDef.split(', ');
+		let init = `scope${outerScope}._forLoop${loopIndex} = ${start}`;
+		let cond = `scope${outerScope}._forLoop${loopIndex} ${operator} ${end}`;
+		let after = `scope${outerScope}._forLoop${loopIndex} += ${step}`;
+		let varInit = `scope${scope}.set('${variableName}',scope${outerScope}._forLoop${loopIndex});`;
+		return `for (${init}; ${cond}; ${after}) {\n${scopeDef}\n${varInit}\n${body}\n}`;
 	},
 
 
@@ -152,7 +170,7 @@ const GENERATORS = {
 		}).join(';\n');
 
 		let defs = scopeDef.split(', ');
-		return `${defs[0]};\n[scope${scope}._iterator, scope${scope}._table, scope${scope}._next] = ${iterator};\nwhile((__star_tmp = scope${scope}._iterator(scope${scope}._table, scope${scope}._next)).length) {\nlet ${defs[1]}\nscope${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
+		return `${defs[0]};\n[scope${scope}._iterator, scope${scope}._table, scope${scope}._next] = ${iterator};\nwhile((__star_tmp = __star.call(scope${scope}._iterator, scope${scope}._table, scope${scope}._next)),__star_tmp[0] !== undefined) {\nlet ${defs[1]}\nscope${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
 
 	},
 
@@ -186,7 +204,8 @@ const GENERATORS = {
 
 		let paramStr = params.join(';\n');
 		let body = this.Chunk(node, scope);
-		let funcDef = `function $${name}(...args){${scopeDef}\n${paramStr}\n${body}}`;
+		let prefix = isAnonymous? '' : '$';
+		let funcDef = `(__star_tmp = function ${prefix}${name}(...args){${scopeDef}\n${paramStr}\n${body}}, __star_tmp.toString=()=>'function: 0x${(++functionIndex).toString(16)}', __star_tmp)`;
 
 		if (isAnonymous) {
 			return funcDef;
@@ -218,7 +237,7 @@ const GENERATORS = {
 	},
 
 
-	IndexExpression(node, scope) {
+	IndexExpression(node, scope, options = {}) {
 		let base = scoped(node.base, scope);
 		let index = scoped(node.index, scope);
 
@@ -226,7 +245,11 @@ const GENERATORS = {
 			index += '[0]';
 		}
 
-		return `${base}.get(${index})`;
+		if ('set' in options) {
+			return `${base}.set(${index}, ${options.set})`;
+		} else {
+			return `${base}.get(${index})`;
+		}
 	},
 
 
@@ -262,10 +285,19 @@ const GENERATORS = {
 	},
 
 
-	MemberExpression(node, scope) {
+	MemberExpression(node, scope, options = {}) {
 		let base = generate(node.base, scope);
 		let identifier = generate(node.identifier, scope);
-		return `${base}.get('${identifier}')`;
+
+		if (isCallExpression(node.identifier)) {
+			identifier += '[0]';
+		}
+
+		if ('set' in options) {
+			return `${base}.set('${identifier}', ${options.set})`;
+		} else {
+			return `${base}.get('${identifier}')`;
+		}
 	},
 
 
@@ -276,6 +308,15 @@ const GENERATORS = {
 
 	NumericLiteral(node) {
 		return node.value.toString();
+	},
+
+
+	RepeatStatement(node, outerScope) {
+		let { scope, scopeDef } = extendScope(outerScope);
+		let condition = scoped(node.condition, outerScope);
+		let body = this.Chunk(node, scope);
+
+		return `do{\n${scopeDef}\n${body}\n}while(!(${condition}))`;
 	},
 
 
@@ -302,7 +343,7 @@ const GENERATORS = {
 
 
 	StringLiteral(node) {
-		let escaped = node.value.replace(/["'\n]/g, '\\$&');
+		let escaped = node.value.replace(/["']/g, '\\$&').replace(/\n/g, '\\n');
 		return `'${escaped}'`;
 	},
 
@@ -369,11 +410,19 @@ const GENERATORS = {
 	
 	VarargLiteral(node, scope) {
 		return '...scope.varargs';
+	},
+
+
+	WhileStatement(node, outerScope) {
+		let { scope, scopeDef } = extendScope(outerScope);
+		let condition = scoped(node.condition, outerScope);
+		let body = this.Chunk(node, scope);
+
+		return `while(${condition}) {\n${scopeDef}\n${body}\n}`;
 	}
 }
 
 
-let scopeIndex = 1;
 
 function extendScope(outerIndex) {
 	let scope = scopeIndex++;
@@ -404,7 +453,13 @@ function isCallExpression(node) {
 }
 
 
-function generate(ast, scope, config) {
+function isLookupExpression(node) {
+	let type = node.type;
+	return type === 'MemberExpression' || type === 'IndexExpression';
+}
+
+
+function generate(ast, scope, options) {
 	let generator = GENERATORS[ast.type];
 
 	if (!generator) {
@@ -412,7 +467,7 @@ function generate(ast, scope, config) {
 		throw new Error(`No generator found for: ${ast.type}`);
 	}
 
-	return generator.call(GENERATORS, ast, scope, config);
+	return generator.call(GENERATORS, ast, scope, options);
 }
 
 

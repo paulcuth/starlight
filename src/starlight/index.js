@@ -8,6 +8,15 @@ export const _G = globals;
 export const op = operators;
 export const T = Table;
 
+export function call(f, ...args) {
+	let result = f(...args);
+	if (result && result instanceof Array) {
+		return result;
+	} else {
+		return [result];
+	}
+}
+
 
 // The following should be configurable
 
@@ -16,3 +25,6 @@ _G.set('math', math);
 
 import { default as table } from './lib/table';
 _G.set('table', table);
+
+import { default as string } from './lib/string';
+_G.set('string', string);
