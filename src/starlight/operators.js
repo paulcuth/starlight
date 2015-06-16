@@ -1,21 +1,42 @@
 import { default as T } from './Table';
-import { coerceToNumber, coerceToBoolean } from './utils';
+import { coerceToNumber, coerceToBoolean, coerceToString } from './utils';
 import { getn } from './lib/table';
 import { default as LuaError } from './LuaError';
 
 
-function binaryArithmetic (left, right, metaMethodName, callback) {
+function binaryArithmetic(left, right, metaMethodName, callback) {
 	let mt, f;
 
 	if ((left && left instanceof T && (mt = left.metatable) && (f = mt.get(metaMethodName)))
 	|| (right && right instanceof T && (mt = right.metatable) && (f = mt.get(metaMethodName)))) {
-		return f.apply(null, [left, right])[0];
+		return f(left, right);
 	} 
 
-	if (typeof left != 'number') left = coerceToNumber(left, 'attempt to perform arithmetic on a %type value');
-	if (typeof right != 'number') right = coerceToNumber(right, 'attempt to perform arithmetic on a %type value');
+	if (typeof left !== 'number') {
+		left = coerceToNumber(left, 'attempt to perform arithmetic on a %type value');
+	}
+
+	if (typeof right !== 'number') {
+		right = coerceToNumber(right, 'attempt to perform arithmetic on a %type value');
+	}
 
 	return callback(left, right);
+}
+
+
+function concat(left, right) {
+	let mt, f;
+
+	if (
+		(left && left instanceof T && (mt = left.metatable) && (f = mt.get('__concat')))
+		|| (right && right instanceof T && (mt = right.metatable) && (f = mt.get('__concat')))
+	) {
+		return f(left, right);
+	} else {
+		right = coerceToString(right, 'attempt to concatenate a %type value');
+		left = coerceToString(left, 'attempt to concatenate a %type value');
+		return `${left}${right}`;
+	}
 }
 
 
@@ -94,54 +115,27 @@ function unaryMinus(value) {
 
 
 export default {
-	concat(left, right) {
-		return `${left}${right}`;
-	},
+	concat,
+	len,
 
-	eq(left, right) {
-		return equal(left, right);
-	},
+	eq: equal,
+	unm: unaryMinus,
+	bool: coerceToBoolean,
 
-	neq(left, right) {
-		return !equal(left, right);
-	},
+	neq: (...args) => !equal(...args),
+	not: (...args) => !coerceToBoolean(...args),
 
-	add(left, right) {
-		return binaryArithmetic(left, right, '__add', (l, r) => l + r);
-	},
-
-	sub(left, right) {
-		return binaryArithmetic(left, right, '__sub', (l, r) => l - r);
-	},
-
-	mul(left, right) {
-		return binaryArithmetic(left, right, '__mul', (l, r) => l * r);
-	},
-
-	div(left, right) {
+	add: (left, right) => binaryArithmetic(left, right, '__add', (l, r) => l + r),
+	sub: (left, right) => binaryArithmetic(left, right, '__sub', (l, r) => l - r),
+	mul: (left, right) => binaryArithmetic(left, right, '__mul', (l, r) => l * r),
+	div: (left, right) => {
 		if (right === undefined) throw new LuaError('attempt to perform arithmetic on a nil value');
 		return binaryArithmetic(left, right, '__div', (l, r) => l / r);
 	},
-
-	mod(left, right) {
-		return binaryArithmetic(left, right, '__mod', mod);
-	},
-
-	pow(left, right) {
-		return binaryArithmetic(left, right, '__pow', Math.pow);
-	},
-
-	len(value) {
-		return len(value);
-	},
-	
-	lt(left, right) {
-		return binaryArithmetic(left, right, '__lt', (l, r) => l < r);
-	},
-	
-	lte(left, right) {
-		return binaryArithmetic(left, right, '__le', (l, r) => l <= r);
-	},
+	mod: (left, right) => binaryArithmetic(left, right, '__mod', mod),
+	pow: (left, right) => binaryArithmetic(left, right, '__pow', Math.pow),
+	lt: (left, right) => binaryArithmetic(left, right, '__lt', (l, r) => l < r),
+	lte: (left, right) => binaryArithmetic(left, right, '__le', (l, r) => l <= r),
 	
 	gt(left, right) {
 		return !this.lte(left, right);
@@ -149,18 +143,6 @@ export default {
 	
 	gte(left, right) {
 		return !this.lt(left, right);
-	},
-
-	bool(value) {
-		return coerceToBoolean(value);
-	},
-
-	unm(value) {
-		return unaryMinus(value);
-	},
-
-	not(value) {
-		return !coerceToBoolean(value);
-	}	
+	}
 };
 

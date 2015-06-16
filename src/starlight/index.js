@@ -28,3 +28,6 @@ _G.set('table', table);
 
 import { default as string } from './lib/string';
 _G.set('string', string);
+
+import { default as os } from './lib/os';
+_G.set('os', os);

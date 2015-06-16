@@ -35,6 +35,8 @@ const LOGICAL_OP_MAP = {
 const GENERATORS = {
 
 	AssignmentStatement(node, scope) {
+		let canOptimise = true;
+
 		let assignments = node.variables.map((variable, index) => {
 			let name;
 			if (isLookupExpression(variable)) {
@@ -61,12 +63,17 @@ const GENERATORS = {
 		let values = node.init.map((init, index) => {
 			let value = scoped(init, scope);
 			if (isCallExpression(init)) {
-				value = `...${value}`;
+				canOptimise = false;
+				return `...${value}`;
 			}
 			return value;
-		}).join(', ');
+		});
 
-		return `__star_tmp = [${values}];${assignments}`;
+		if (canOptimise) {
+			return assignments.replace(/__star_tmp\[(\d+)\]/g, (match, index) => values[index]);
+		} else {
+			return `__star_tmp = [${values.join(', ')}];${assignments}`;
+		}
 	},
 
 
@@ -186,7 +193,7 @@ const GENERATORS = {
 			if (name === '...scope.varargs') {
 				return `scope.varargs = args`;
 			} else {
-				return `scope.set('${name}', args.shift())`;
+				return `scope.setLocal('${name}', args.shift())`;
 			}
 		});
 

@@ -108,15 +108,11 @@ export function pcall(func, ...args) {
 		}
 
 	} catch (e) {
-		return [false, e && e.message || e];
+		return [false, e && e.toString()];
 	}
 	
-	if (!(result && result instanceof Array)) {
-		result = [result];
-	}
-
-	result.unshift(true);
-	return result;
+	result = [].concat(result);
+	return [true, ...result];
 }
 
 
