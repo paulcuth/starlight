@@ -1,5 +1,6 @@
 import { default as T } from '../Table';
 import { default as LuaError } from '../LuaError';
+import { coerceToNumber } from '../utils';
 
 
 export function getn(table) {
@@ -41,6 +42,24 @@ export function getn(table) {
 }
 
 
+export function insert(table, index, obj) {
+	if (!(table instanceof T)) {
+		throw new LuaError('Bad argument #1 in table.insert(). Table expected');
+	}
+
+	if (obj === void 0) {
+		obj = index;
+		index = table.numValues.length;
+	} else {
+		index = coerceToNumber(index, "Bad argument #2 to 'insert' (number expected)");
+	}
+
+	table.numValues.splice(index, 0, void 0);
+	table.set(index, obj);
+}
+
+
 export default new T({
-	getn
+	getn,
+	insert
 });

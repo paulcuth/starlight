@@ -212,7 +212,7 @@ const GENERATORS = {
 		let paramStr = params.join(';\n');
 		let body = this.Chunk(node, scope);
 		let prefix = isAnonymous? '' : '$';
-		let funcDef = `(__star_tmp = function ${prefix}${name}(...args){${scopeDef}\n${paramStr}\n${body}}, __star_tmp.toString=()=>'function: 0x${(++functionIndex).toString(16)}', __star_tmp)`;
+		let funcDef = `(__star_tmp = function ${prefix}${name}(...args){${scopeDef}\n${paramStr}\n${body} return [];}, __star_tmp.toString=()=>'function: 0x${(++functionIndex).toString(16)}', __star_tmp)`;
 
 		if (isAnonymous) {
 			return funcDef;
@@ -332,7 +332,10 @@ const GENERATORS = {
 
 
 	ReturnStatement(node, scope) {
-		let args = node.arguments.map((arg) => scoped(arg, scope)).join(', ');
+		let args = node.arguments.map(arg => {
+			let result = scoped(arg, scope);
+			return isCallExpression(arg) ? `...${result}` : result;
+		}).join(', ');
 		return `return [${args}];`;
 	},
 
@@ -342,13 +345,13 @@ const GENERATORS = {
 		let args = [generate(node.argument, scope)];
 
 		if (isCallExpression(node.base)) {
-			return `${functionName}[0](${args})`;
+			return `__star.call(${functionName}[0],${args})`;
 		} else {
 			if (node.base.type === 'MemberExpression' && node.base.indexer === ':') {
 				let [, subject] = [].concat(functionName.match(/^(.*)\.get\('.*?'\)$/))
 				args.unshift(subject);
 			}
-			return `${functionName}(${args})`;
+			return `__star.call(${functionName},${args})`;
 		}
 	},
 
@@ -364,13 +367,13 @@ const GENERATORS = {
 		let args = [generate(node.arguments, scope)];
 
 		if (isCallExpression(node.base)) {
-			return `${functionName}[0](${args})`;
+			return `__star.call(${functionName}[0],${args})`;
 		} else {
 			if (node.base.type === 'MemberExpression' && node.base.indexer === ':') {
 				let [, subject] = [].concat(functionName.match(/^(.*)\.get\('.*?'\)$/))
 				args.unshift(subject);
 			}
-			return `${functionName}(${args})`;
+			return `__star.call(${functionName},${args})`;
 		}
 	},
 

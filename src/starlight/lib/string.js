@@ -89,6 +89,30 @@ export function find(s, pattern, init = 1, plain = false) {
 }
 
 
+export function sub(s, i = 1, j) {
+	let t = typeof s;
+	if (t !== 'string' && t !== 'number') {
+		throw new LuaError("Bad argument #1 to 'sub' (string expected, got " + t + ")");
+	}
+
+	s = `${s}`;
+	j = j || s.length;
+	
+	if (i > 0) {
+		i = i - 1;
+	} else if (i < 0) {
+		i = s.length + i;
+	}
+	
+	if (j < 0) {
+		j = s.length + j + 1;
+	}
+
+	return s.substring(i, j);
+}
+
+
 export default new T({
-	find
+	find,
+	sub
 });

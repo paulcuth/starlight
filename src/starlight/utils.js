@@ -73,7 +73,7 @@ export function coerceToNumber(val, errorMessage) {
 
 	switch (true) {
 		case typeof val == 'number': return val;
-		case val === undefined: return;
+		case val === void 0: return;
 		case val === 'inf': return Infinity;
 		case val === '-inf': return -Infinity;
 		case val === 'nan': return NaN;
@@ -92,7 +92,10 @@ export function coerceToNumber(val, errorMessage) {
 				}
 			}
 
-			if (n === undefined) throwCoerceError(val, errorMessage);
+			if (n === void 0) {
+				throwCoerceError(val, errorMessage);
+			}
+			
 			return n;
 	}
 }

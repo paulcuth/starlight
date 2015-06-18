@@ -146,7 +146,7 @@ export default class Table {
 			(mt = this.metatable) 
 			&& (mm = mt.get('__tostring'))
 		) {
-			return mt(this)[0];
+			return mm(this)[0];
 		} else {
 			return 'table: 0x' + this.index.toString(16);
 		}

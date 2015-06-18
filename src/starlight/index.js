@@ -24,7 +24,8 @@ export function call(f, ...args) {
 	}
 
 	let result = f(...args);
-	if (result && result instanceof Array) {
+
+	if (result instanceof Array) {
 		return result;
 	} else {
 		return [result];
