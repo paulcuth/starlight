@@ -2,6 +2,7 @@ import { default as Scope } from './Scope';
 import { default as globals } from './lib/globals';
 import { default as operators } from './operators';
 import { default as Table } from './Table';
+import { default as LuaError } from './LuaError';
 
 export const globalScope = new Scope(globals.strValues);
 export const _G = globals;
@@ -9,6 +10,19 @@ export const op = operators;
 export const T = Table;
 
 export function call(f, ...args) {
+	if (f === undefined) {
+		throw new LuaError('attempt to call a nil value');
+	} else if (f instanceof T) {
+		let mt, mm;
+		if (
+			(mt = f.metatable)
+			&& (mm = mt.rawget('__call'))
+		) {
+			args.unshift(f);
+			f = mm;
+		}
+	}
+
 	let result = f(...args);
 	if (result && result instanceof Array) {
 		return result;

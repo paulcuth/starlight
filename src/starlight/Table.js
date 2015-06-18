@@ -36,86 +36,95 @@ export default class Table {
 
 
 	get(key) {
-		switch (typeof key) {
-			case 'string':
-				let value = this.strValues[key];
-				if (value !== undefined) {
-					return value;
-				}
-				break;
+		let value = this.rawget(key);
 
-			case 'number':
-				if (key > 0 && key == key >> 0) {
-					let value = this.numValues[key];
-					if (value !== undefined) {
-						return value;
-					}
-					break;
+		if (value === void 0) {
+			let mt, mm;
+			if (
+				(mt = this.metatable) 
+				&& (mm = mt.get('__index'))
+			) {
+				switch (mm.constructor) {
+					case Table: return mm.get(key);
+					case Function:
+						value = mm.call(undefined, this, key);
+						return (value instanceof Array)? value[0] : value;
 				}
-
-			default:
-				let index = this.keys.indexOf(key);
-				if (index >= 0) {
-					return this.values[index];
-				}
-		}
-		
-		let mt, mm;
-		if ((mt = this.metatable) && (mm = mt.get('__index'))) {
-			switch (mm.constructor) {
-				case Table: return mm.get(key);
-				case Function:
-					value = mm.call(undefined, this, key);
-					return (value instanceof Array)? value[0] : value;
 			}
 		}
 
+		return value;
+	}
+
+
+	rawget(key) {
+		switch (typeof key) {
+			case 'string': 	return this.strValues[key];
+			case 'number':
+				if (key > 0 && key == key >> 0) {
+					return this.numValues[key];
+				}
+				/* fallthrough */
+			default:
+				let index = this.keys.indexOf(key);
+				return (index >= 0) ? this.values[index] : void 0;
+		}
 	}
 
 
 	set(key, value) {
-		let typ = typeof key,
-			mt = this.metatable,
-			positiveIntegerKey = key > 0 && key == key >> 0,
-			keys, index, oldValue;
+		let mt, mm;
+		if (
+			(mt = this.metatable) 
+			&& (mm = mt.get('__newindex'))
+		) {
+			let oldValue;
 
-		switch (typ) {
-			case 'string':
-				oldValue = this.strValues[key];
-				break;
-
-			case 'number':
-				if (positiveIntegerKey) {
-					oldValue = this.numValues[key];
+			switch (typeof key) {
+				case 'string':
+					oldValue = this.strValues[key];
 					break;
+
+				case 'number':
+					let positiveIntegerKey = key > 0 && key == key >> 0;
+					if (positiveIntegerKey) {
+						oldValue = this.numValues[key];
+						break;
+					}
+
+				default:
+					let keys = this.keys;
+					let index = keys.indexOf(key);
+					oldValue = index == -1? undefined : this.values[index];
+			}
+
+			if (oldValue === undefined) {
+				switch (mm.constructor) {
+					case Table: return mm.set(key, value);
+					case Function: return mm(this, key, value);
 				}
-
-			default:
-				keys = this.keys;
-				index = keys.indexOf(key);
-				oldValue = index == -1? undefined : this.values[index];
-		}
-
-		// TODO: Refactor the block above into this if statement..
-		if (oldValue === undefined && mt && mt.get('__newindex')) {
-			switch (mt.__newindex.constructor) {
-				case Table: return mt.get('__newindex').set(key, value);
-				case Function: return mt.__newindex(this, key, value);
 			}
 		}
+		this.rawset(key, value);
+	}
 
-		switch (typ) {
+
+	rawset(key, value) {
+		switch (typeof key) {
 			case 'string':
 				this.strValues[key] = value;
 				break;
 
 			case 'number':
+				let positiveIntegerKey = key > 0 && key == key >> 0;
 				if (positiveIntegerKey) {
 					this.numValues[key] = value;
 					break;
 				}
 
 			default:
+				let keys = this.keys;
+				let index = keys.indexOf(key);
 				if (index < 0) {
 					index = keys.length;
 					keys[index] = key;
@@ -132,9 +141,12 @@ export default class Table {
 
 
 	toString() {
-		let mt = this.metatable;
-		if (mt && mt.__tostring) {
-			return mt.__tostring(this)[0];
+		let mt, mm;
+		if (
+			(mt = this.metatable) 
+			&& (mm = mt.get('__tostring'))
+		) {
+			return mt(this)[0];
 		} else {
 			return 'table: 0x' + this.index.toString(16);
 		}

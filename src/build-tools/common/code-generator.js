@@ -42,7 +42,7 @@ const GENERATORS = {
 			if (isLookupExpression(variable)) {
 				name = generate(variable, scope, { set: `__star_tmp[${index}]` });
 				let [, root, accessor] = [].concat(name.match(/^([^.]+)(.*)$/));
-				if (root === 'scope') {
+				if (root === 'scope' || root === '__star') {
 					return name;
 				} else {
 					return `scope.get('${root}')${accessor}`;
@@ -295,6 +295,10 @@ const GENERATORS = {
 	MemberExpression(node, scope, options = {}) {
 		let base = generate(node.base, scope);
 		let identifier = generate(node.identifier, scope);
+
+		if (isCallExpression(node.base)) {
+			base += '[0]';
+		}
 
 		if (isCallExpression(node.identifier)) {
 			identifier += '[0]';

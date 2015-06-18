@@ -7,9 +7,9 @@ import { default as LuaError } from './LuaError';
 function binaryArithmetic(left, right, metaMethodName, callback) {
 	let mt, f;
 
-	if ((left && left instanceof T && (mt = left.metatable) && (f = mt.get(metaMethodName)))
-	|| (right && right instanceof T && (mt = right.metatable) && (f = mt.get(metaMethodName)))) {
-		return f(left, right);
+	if ((left && left instanceof T && (mt = left.metatable) && (f = mt.rawget(metaMethodName)))
+	|| (right && right instanceof T && (mt = right.metatable) && (f = mt.rawget(metaMethodName)))) {
+		return f(left, right)[0];
 	} 
 
 	if (typeof left !== 'number') {
@@ -28,10 +28,10 @@ function concat(left, right) {
 	let mt, f;
 
 	if (
-		(left && left instanceof T && (mt = left.metatable) && (f = mt.get('__concat')))
-		|| (right && right instanceof T && (mt = right.metatable) && (f = mt.get('__concat')))
+		(left && left instanceof T && (mt = left.metatable) && (f = mt.rawget('__concat')))
+		|| (right && right instanceof T && (mt = right.metatable) && (f = mt.rawget('__concat')))
 	) {
-		return f(left, right);
+		return f(left, right)[0];
 	} else {
 		right = coerceToString(right, 'attempt to concatenate a %type value');
 		left = coerceToString(left, 'attempt to concatenate a %type value');
@@ -49,7 +49,7 @@ function equal(left, right) {
 		&& (mtl = left.metatable) 
 		&& (mtr = right.metatable) 
 		&& mtl === mtr 
-		&& (f = mtl.getMember('__eq'))
+		&& (f = mtl.rawget('__eq'))
 	) {
 		return !!f(left, right)[0];
 	}
@@ -102,7 +102,7 @@ function len(value) {
 function unaryMinus(value) {
 	var mt, f, result;
 
-	if (value && value instanceof T && (mt = value.metatable) && (f = mt.get('__unm'))) {
+	if (value && value instanceof T && (mt = value.metatable) && (f = mt.rawget('__unm'))) {
 		return f(value)[0];
 	}
 

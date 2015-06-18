@@ -1,6 +1,10 @@
 import { default as T } from '../Table';
 import { default as LuaError } from '../LuaError';
 import { stdout } from '../utils';
+import { default as stringLib } from './string';
+
+
+const stringMetatable = new T({ __index: stringLib });
 
 
 function ipairsIterator(table, index) {
@@ -16,8 +20,21 @@ function ipairsIterator(table, index) {
 }
 
 
+
 export function error(message) {
 	throw new LuaError(message);	
+}
+
+
+export function getmetatable(table) {
+	if (table && table instanceof T) {
+		let mt = table.metatable;
+		let mm;
+		return (mm = mt.get('__metatable')) ? mm : mt;
+
+	} else if (typeof table == 'string') {
+		return stringMetatable;
+	}
 }
 
 
@@ -127,6 +144,15 @@ export function print(...args) {
 }
 
 
+export function rawset(table, index, value) {
+	if (!(table instanceof T)) throw new LuaError('Bad argument #1 in rawset(). Table expected');
+	if (index === undefined) throw new LuaError('Bad argument #2 in rawset(). Nil not allowed');
+
+	table.rawset(index, value);
+	return table;
+}
+
+
 export function setmetatable(table, metatable) {
 	if (!(table && table instanceof T)) {
 		throw new LuaError('Bad argument #1 in setmetatable(). Table expected');
@@ -137,7 +163,10 @@ export function setmetatable(table, metatable) {
 	}
 
 	let mt;
-	if ((mt = table.metatable) && (mt = mt.__metatable)) {
+	if (
+		(mt = table.metatable) 
+		&& mt.rawget('__metatable')
+	) {
 		throw new LuaError('cannot change a protected metatable');
 	}
 
@@ -201,11 +230,13 @@ export function xpcall(func, err) {
 
 export default new T({
 	error,
+	getmetatable,
 	ipairs,
 	next,
 	pairs,
 	pcall,
 	print,
+	rawset,
 	setmetatable,
 	tostring,
 	type,
