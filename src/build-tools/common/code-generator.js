@@ -160,7 +160,7 @@ const GENERATORS = {
 		let init = `scope${outerScope}._forLoop${loopIndex} = ${start}`;
 		let cond = `scope${outerScope}._forLoop${loopIndex} ${operator} ${end}`;
 		let after = `scope${outerScope}._forLoop${loopIndex} += ${step}`;
-		let varInit = `scope${scope}.set('${variableName}',scope${outerScope}._forLoop${loopIndex});`;
+		let varInit = `scope${scope}.setLocal('${variableName}',scope${outerScope}._forLoop${loopIndex});`;
 		return `for (${init}; ${cond}; ${after}) {\n${scopeDef}\n${varInit}\n${body}\n}`;
 	},
 
@@ -173,7 +173,7 @@ const GENERATORS = {
 
 		let variables = node.variables.map((variable, index) => {
 			let name = generate(variable, scope);
-			return `scope.set('${name}', __star_tmp[${index}])`;
+			return `scope.setLocal('${name}', __star_tmp[${index}])`;
 		}).join(';\n');
 
 		let defs = scopeDef.split(', ');

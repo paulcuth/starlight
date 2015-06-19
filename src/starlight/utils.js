@@ -1,5 +1,6 @@
 import { type } from './lib/globals';
 import { default as LuaError } from './LuaError';
+import { default as T } from './Table';
 
 
 /**
@@ -58,7 +59,7 @@ function throwCoerceError (val, errorMessage) {
  * @returns {Boolean} The converted value.
  */
 export function coerceToBoolean(val) {
-	return !(val === false || val === undefined);
+	return !(val === false || val === void 0);
 }
 
 
@@ -95,7 +96,7 @@ export function coerceToNumber(val, errorMessage) {
 			if (n === void 0) {
 				throwCoerceError(val, errorMessage);
 			}
-			
+
 			return n;
 	}
 }
@@ -112,7 +113,7 @@ export function coerceToString(val, errorMessage) {
 		case typeof val == 'string': 
 			return val;
 
-		case val === undefined:
+		case val === void 0:
 		case val === null: 
 			return 'nil';
 		
@@ -130,5 +131,29 @@ export function coerceToString(val, errorMessage) {
 			return throwCoerceError(val, errorMessage) || '';
 	}
 }
+
+
+
+function coerceArg(value, coerceFunc, typ, funcName, index) {
+	return coerceFunc(value, `bad argument #${index} to '${funcName}' (${typ} expected, got %type)`);
+}
+
+export function coerceArgToNumber(value, funcName, index) {
+	return coerceArg(value, coerceToNumber, 'number', funcName, index);
+}
+
+export function coerceArgToString(value, funcName, index) {
+	return coerceArg(value, coerceToString, 'string', funcName, index);
+}
+
+export function coerceArgToTable(value, funcName, index) {
+	if (value instanceof T) {
+		return value;
+	} else {
+		let typ = type(value);
+		throw new LuaError(`bad argument #${index} to '${funcName}' (table expected, got ${typ})`);
+	}
+}
+
 
 

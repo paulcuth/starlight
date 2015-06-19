@@ -1,8 +1,17 @@
 import { default as T } from '../Table';
 import { default as LuaError } from '../LuaError';
-import { stdout, coerceToNumber, coerceToString } from '../utils';
 import { default as stringLib } from './string';
 import { getn } from './table';
+
+import { 
+	stdout,
+	coerceToNumber, 
+	coerceToString, 
+	coerceToBoolean,
+	coerceArgToNumber, 
+	coerceArgToString,
+	coerceArgToTable
+} from '../utils';
 
 
 const stringMetatable = new T({ __index: stringLib });
@@ -27,16 +36,29 @@ export const _VERSION = 'Lua 5.1';
 
 
 export function assert(v, m) {
-	if (v === false || v === void 0) {
+	if (!coerceToBoolean(v)) {
+		m = coerceArgToString(m, 'assert', 2);
 		throw new LuaError(m || 'Assertion failed!');
 	}
 	return [v, m];
 }
 
 
+// TODO dofile([filename])
+
+
 export function error(message) {
+	if (
+		typeof message !== 'string' 
+		&& typeof message !== 'number'
+	) {
+		message = '(error object is not a string)';
+	}
 	throw new LuaError(message);	
 }
+
+
+// TODO getfenv([f])
 
 
 export function getmetatable(table) {
@@ -52,15 +74,22 @@ export function getmetatable(table) {
 }
 
 
-export function ipairs(table) {
-	if (!(table && table instanceof T)) throw new LuaError('Bad argument #1 in ipairs(). Table expected');
-	return [ipairsIterator, table, 0];
+export function ipairs(t) {
+	t = coerceArgToTable(t, 'ipairs', 1);
+	return [ipairsIterator, t, 0];
 }
 
 
+// TODO load(func [, chunkname])
+// TODO loadfile([filename])
+// TODO loadstring(string [, chunkname])
+
+
 export function next(table, index) {
+	table = coerceArgToTable(table, 'next', 1);
+
 	// SLOOOOOOOW...
-	let found = (index === undefined),
+	let found = (index === void 0),
 		key, value,
 		i, l;
 
@@ -128,6 +157,12 @@ export function next(table, index) {
 }
 
 
+export function pairs(table) {
+	table = coerceArgToTable(table, 'pairs', 1);
+	return [next, table];
+}
+
+
 export function pcall(func, ...args) {
 	let result;
 
@@ -147,20 +182,26 @@ export function pcall(func, ...args) {
 }
 
 
-export function pairs(table) {
-	if (!table || !(table instanceof T)) throw new LuaError('Bad argument #1 in pairs(). Table expected');
-	return [next, table];
+export function print(...args) {
+	let output = args.map(arg => tostring(arg)).join('\t');
+	stdout.writeln(output);
 }
 
 
-export function print(...args) {
-	stdout.writeln(...args);
+export function rawequal(v1, v2) {
+	return v1 === v2;
+}
+
+
+export function rawget(table, index) {
+	table = coerceArgToTable(table, 'rawget', 1);
+	return table.rawget(index);
 }
 
 
 export function rawset(table, index, value) {
-	if (!(table instanceof T)) throw new LuaError('Bad argument #1 in rawset(). Table expected');
-	if (index === undefined) throw new LuaError('Bad argument #2 in rawset(). Nil not allowed');
+	table = coerceArgToTable(table, 'rawset', 1);
+	if (index === undefined) throw new LuaError('table index is nil');
 
 	table.rawset(index, value);
 	return table;
@@ -175,18 +216,19 @@ export function select(index, ...args) {
 		return args.slice(index - 1);
 		
 	} else {
-		throw new LuaError('bad argument #1 in select(). Number or "#" expected');
+		let typ = type(index);
+		throw new LuaError(`bad argument #1 to 'select' (number expected, got ${typ})`);
 	}
 }
 
 
-export function setmetatable(table, metatable) {
-	if (!(table && table instanceof T)) {
-		throw new LuaError('Bad argument #1 in setmetatable(). Table expected');
-	}
+// TODO setfenv(f, table)
 
-	if (!(metatable === undefined || (metatable && metatable instanceof T))) {
-		throw new LuaError('Bad argument #2 in setmetatable(). Nil or table expected');
+
+export function setmetatable(table, metatable) {
+	table = coerceArgToTable(table, 'setmetatable', 1);
+	if (metatable !== undefined) {
+		metatable = coerceArgToTable(metatable, 'setmetatable', 2);
 	}
 
 	let mt;
@@ -203,10 +245,12 @@ export function setmetatable(table, metatable) {
 
 
 export function tonumber(e, base = 10) {
+	base = coerceArgToNumber(base, 'tonumber', 2);
+
 	if (e === '') return;
 
 	if (base < 2 || base > 36) {
-		throw new LuaError('bad argument #2 to tonumber() (base out of range)');
+		throw new LuaError(`bad argument #2 to 'tonumber' (base out of range)`);
 	}
 
 	if (base == 10 && (e === Infinity || e === -Infinity || (typeof e == 'number' && global.isNaN(e)))) {
@@ -254,11 +298,10 @@ export function tostring(e) {
 		return mm.call(mm, e);
 	}
 
-	if (
-		e 
-		&& (e instanceof T || e instanceof Function)
-	) {
+	if (e instanceof T) {
 		return e.toString();
+	} else if (e instanceof Function) {
+		return e.hasOwnProperty('toString')? `${e}` : 'function: [host code]';
 	}
 
 	return coerceToString(e) || 'userdata';
@@ -288,12 +331,13 @@ export function type(v) {
 
 
 export function unpack(table, i = 1, j) {
-	if (!(table instanceof T)) {
-		throw new LuaError("Bad argument #1 to 'unpack' (table expected)");
-	} 
+	table = coerceArgToTable(table, 'unpack', 1);
+	i = coerceArgToNumber(i, 'unpack', 2);
 
 	if (j === undefined) {
 		j = getn(table);
+	} else {
+		j = coerceArgToNumber(j, 'unpack', 3);
 	}
 	
 	return table.numValues.slice(i, j + 1);
@@ -326,7 +370,7 @@ export function xpcall(func, err) {
 
 
 
-export default new T({
+export const _G = new T({
 	_VERSION,
 	assert,
 	error,
@@ -336,6 +380,8 @@ export default new T({
 	pairs,
 	pcall,
 	print,
+	rawequal,
+	rawget,
 	rawset,
 	select,
 	setmetatable,
@@ -345,3 +391,7 @@ export default new T({
 	unpack,
 	xpcall,
 });
+
+
+_G.rawset('_G', _G);
+export default _G;

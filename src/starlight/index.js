@@ -3,6 +3,7 @@ import { default as globals } from './lib/globals';
 import { default as operators } from './operators';
 import { default as Table } from './Table';
 import { default as LuaError } from './LuaError';
+import { type } from './utils';
 
 export const globalScope = new Scope(globals.strValues);
 export const _G = globals;
@@ -10,8 +11,8 @@ export const op = operators;
 export const T = Table;
 
 export function call(f, ...args) {
-	if (f === undefined) {
-		throw new LuaError('attempt to call a nil value');
+	if (typeof f === 'function') {
+		// noop
 	} else if (f instanceof T) {
 		let mt, mm;
 		if (
@@ -21,6 +22,9 @@ export function call(f, ...args) {
 			args.unshift(f);
 			f = mm;
 		}
+	} else {
+		let typ = type(f);
+		throw new LuaError(`attempt to call a ${typ} value`);
 	}
 
 	let result = f(...args);

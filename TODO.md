@@ -9,3 +9,5 @@ Things to be revisited later:
 - loadfile()
 - loadstring()
 - require()
+- string.dump()
+- string.format()
