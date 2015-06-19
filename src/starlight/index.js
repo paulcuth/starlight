@@ -1,9 +1,8 @@
 import { default as Scope } from './Scope';
-import { default as globals } from './lib/globals';
+import { default as globals, type } from './lib/globals';
 import { default as operators } from './operators';
 import { default as Table } from './Table';
 import { default as LuaError } from './LuaError';
-import { type } from './utils';
 
 export const globalScope = new Scope(globals.strValues);
 export const _G = globals;

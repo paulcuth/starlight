@@ -155,5 +155,14 @@ export function coerceArgToTable(value, funcName, index) {
 	}
 }
 
+export function coerceArgToFunction(value, funcName, index) {
+	if (value instanceof Function) {
+		return value;
+	} else {
+		let typ = type(value);
+		throw new LuaError(`bad argument #${index} to '${funcName}' (function expected, got ${typ})`);
+	}
+}
+
 
 
