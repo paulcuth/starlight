@@ -39,7 +39,7 @@ const DATE_FORMAT_HANDLERS = {
 	'%X': (d, utc) => DATE_FORMAT_HANDLERS['%H'](d, utc) + ':' + DATE_FORMAT_HANDLERS['%M'](d, utc) + ':' + DATE_FORMAT_HANDLERS['%S'](d, utc),
 	'%y': (d, utc) => DATE_FORMAT_HANDLERS['%Y'](d, utc).substr (-2),
 	'%Y': (d, utc) => '' + d['get' + (utc? 'UTC' : '') + 'FullYear'](),
-	'%Z': (d, utc) => { let m; (utc && 'UTC') || ((m = d.toString().match(/[A-Z][A-Z][A-Z]/)) && m[0]); },
+	'%Z': (d, utc) => { let m; return (utc && 'UTC') || ((m = d.toString().match(/[A-Z][A-Z][A-Z]/)) && m[0]); },
 	'%%': () => '%'
 }
 
@@ -50,6 +50,15 @@ function isDST(date) {
 		
 	// ASSUMPTION: If the time offset of the date is the same as it would be in January of the same year, DST is not in effect.
 	return (date.getTimezoneOffset() !== jan.getTimezoneOffset());
+}
+
+
+function getWeekOfYear (d, firstDay, utc) { 
+	let dayOfYear = parseInt(DATE_FORMAT_HANDLERS['%j'](d), 10);
+	let jan1 = new Date(d.getFullYear (), 0, 1, 12);
+	let offset = (8 - jan1['get' + (utc? 'UTC' : '') + 'Day']() + firstDay) % 7;
+
+	return ('0' + (Math.floor((dayOfYear - offset) / 7) + 1)).substr(-2);
 }
 
 

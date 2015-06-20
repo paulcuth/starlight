@@ -454,7 +454,11 @@ function scoped(node, scope) {
 		case 'MemberExpression':
 			let [_, root, path, property] = value.match(/^([^.]+)\.(.*\.)?get\('([^.]+)'\)$/);
 			path = path || '';
-			return `scope.get('${root}').${path}get('${property}')`;
+			if (root === 'scope' || root === '__star') {
+				return value;	
+			} else {
+				return `scope.get('${root}').${path}get('${property}')`;
+			}
 
 		default: 
 			return value;
