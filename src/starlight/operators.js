@@ -114,7 +114,7 @@ function unaryMinus(value) {
 }
 
 
-export default {
+const op = {
 	concat,
 	len,
 
@@ -138,11 +138,12 @@ export default {
 	lte: (left, right) => binaryArithmetic(left, right, '__le', (l, r) => l <= r),
 	
 	gt(left, right) {
-		return !this.lte(left, right);
+		return !op.lte(left, right);
 	},
 	
 	gte(left, right) {
-		return !this.lt(left, right);
+		return !op.lt(left, right);
 	}
 };
 
+export default op;

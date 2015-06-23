@@ -51,6 +51,7 @@ gulp.task('build-node-test', function () {
 
     gulp.src('src/test/test.lua')
         .pipe(starlight())
+        .pipe(gulp.dest('dist/test'))
         .pipe(babel())
         .pipe(uglify())
         .pipe(concat('test-node.lua.js'))
@@ -77,6 +78,7 @@ gulp.task('build-test', ['build-node-test'], function () {
 
 
 gulp.task('test', function () {
+    global.starlight = { config: { env: { getTimestamp: Date.now.bind(Date) } } };
     require('./dist/node/index.js');
     require('./dist/test/test-node.lua.js');
 });        

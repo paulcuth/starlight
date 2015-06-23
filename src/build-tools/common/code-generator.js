@@ -42,7 +42,7 @@ const GENERATORS = {
 			if (isLookupExpression(variable)) {
 				name = generate(variable, scope, { set: `__star_tmp[${index}]` });
 				let [, root, accessor] = [].concat(name.match(/^([^.]+)(.*)$/));
-				if (root === 'scope' || root === '__star') {
+				if (root === 'scope' || root.substr(0,6) === '__star') {
 					return name;
 				} else {
 					return `scope.get('${root}')${accessor}`;
@@ -95,7 +95,7 @@ const GENERATORS = {
 			throw new Error(`Unhandled binary operator: ${node.operator}`);
 		}
 
-		return `__star.op.${operator}(${left}, ${right})`;
+		return `__star_op_${operator}(${left}, ${right})`;
 	},
 
 
@@ -123,7 +123,7 @@ const GENERATORS = {
 			args.unshift(`${functionName}`);
 		}
 
-		return `__star.call(${args})`;
+		return `__star_call(${args})`;
 	},
 
 
@@ -136,7 +136,7 @@ const GENERATORS = {
 	DoStatement(node, outerScope) {
 		let { scope, scopeDef } = extendScope(outerScope);
 		let body = this.Chunk(node, scope);
-		return `(function() {\n${scopeDef}\n${body}\n})()`;
+		return `()=>{\n${scopeDef}\n${body}\n}()`;
 	},
 
 
@@ -177,7 +177,7 @@ const GENERATORS = {
 		}).join(';\n');
 
 		let defs = scopeDef.split(', ');
-		return `${defs[0]};\n[scope${scope}._iterator, scope${scope}._table, scope${scope}._next] = ${iterator};\nwhile((__star_tmp = __star.call(scope${scope}._iterator, scope${scope}._table, scope${scope}._next)),__star_tmp[0] !== undefined) {\nlet ${defs[1]}\nscope${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
+		return `${defs[0]};\n[scope${scope}._iterator, scope${scope}._table, scope${scope}._next] = ${iterator};\nwhile((__star_tmp = __star_call(scope${scope}._iterator, scope${scope}._table, scope${scope}._next)),__star_tmp[0] !== undefined) {\nlet ${defs[1]}\nscope${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
 
 	},
 
@@ -233,7 +233,7 @@ const GENERATORS = {
 	IfClause(node, scope) {
 		let condition = scoped(node.condition, scope);
 		let body = this.Chunk(node, scope);
-		return `if (__star.op.bool(${condition})) {\n${body}\n}`;
+		return `if (__star_op_bool(${condition})) {\n${body}\n}`;
 	},
 
 
@@ -260,6 +260,7 @@ const GENERATORS = {
 
 
 	LocalStatement(node, scope) {
+		let canOptimise = true;
 		let assignments = node.variables.map((variable, index) => {
 			let name = generate(variable, scope);
 			return `scope.setLocal('${name}', __star_tmp[${index}])`;
@@ -268,12 +269,17 @@ const GENERATORS = {
 		let values = node.init.map((init, index) => {
 			let value = scoped(init, scope);
 			if (isCallExpression(init)) {
+				canOptimise = false;
 				value = `...${value}`;
 			}
 			return value;
-		}).join(', ');
+		});
 
-		return `__star_tmp = [${values}];${assignments}`;
+		// if (canOptimise) {
+		// 	return assignments.replace(/__star_tmp\[(\d+)\]/g, (match, index) => values[index]);
+		// } else {
+			return `__star_tmp = [${values.join(', ')}];${assignments}`;
+		// }
 	},
 
 
@@ -344,13 +350,13 @@ const GENERATORS = {
 		let args = [generate(node.argument, scope)];
 
 		if (isCallExpression(node.base)) {
-			return `__star.call(${functionName}[0],${args})`;
+			return `__star_call(${functionName}[0],${args})`;
 		} else {
 			if (node.base.type === 'MemberExpression' && node.base.indexer === ':') {
 				let [, subject] = [].concat(functionName.match(/^(.*)\.get\('.*?'\)$/))
 				args.unshift(subject);
 			}
-			return `__star.call(${functionName},${args})`;
+			return `__star_call(${functionName},${args})`;
 		}
 	},
 
@@ -366,20 +372,20 @@ const GENERATORS = {
 		let args = [generate(node.arguments, scope)];
 
 		if (isCallExpression(node.base)) {
-			return `__star.call(${functionName}[0],${args})`;
+			return `__star_call(${functionName}[0],${args})`;
 		} else {
 			if (node.base.type === 'MemberExpression' && node.base.indexer === ':') {
 				let [, subject] = [].concat(functionName.match(/^(.*)\.get\('.*?'\)$/))
 				args.unshift(subject);
 			}
-			return `__star.call(${functionName},${args})`;
+			return `__star_call(${functionName},${args})`;
 		}
 	},
 
 
 	TableConstructorExpression(node, scope) {
 		let fields = node.fields.map(field => generate(field, scope)).join(';\n');
-		return `new __star.T(t => {${fields}})`;
+		return `new __star_T(t => {${fields}})`;
 	},
 
 
@@ -417,7 +423,7 @@ const GENERATORS = {
 			throw new Error(`Unhandled unary operator: ${node.operator}`);
 		}
 
-		return `__star.op.${operator}(${argument})`;
+		return `__star_op_${operator}(${argument})`;
 	},
 
 	
@@ -453,7 +459,7 @@ function scoped(node, scope) {
 		case 'MemberExpression':
 			let [_, root, path, property] = value.match(/^([^.]+)\.(.*\.)?get\('([^.]+)'\)$/);
 			path = path || '';
-			if (root === 'scope' || root === '__star') {
+			if (root === 'scope' || root.substr(0,6) === '__star') {
 				return value;	
 			} else {
 				return `scope.get('${root}').${path}get('${property}')`;
@@ -490,6 +496,17 @@ function generate(ast, scope, options) {
 
 export function generateJS(ast) {
 	let init = 'let __star = global.starlight.runtime, scope0 = __star.globalScope, scope = scope0, __star_tmp;\n';
+	init += 'let __star_call = __star.call, __star_T = __star.T, __star_op_bool = __star.op.bool;';
+	init += 'let __star_scope_get = Function.prototype.call.bind(__star.globalScope.constructor.prototype.get);';
+	init += 'let __star_scope_set = Function.prototype.call.bind(__star.globalScope.constructor.prototype.set);';
+	init += 'let __star_scope_setLocal = Function.prototype.call.bind(__star.globalScope.constructor.prototype.setLocal)';
+	for (let k in UNI_OP_MAP) { init += ', __star_op_' + UNI_OP_MAP[k] + ' = __star.op.' + UNI_OP_MAP[k]; }
+	for (let k in BIN_OP_MAP) { init += ', __star_op_' + BIN_OP_MAP[k] + ' = __star.op.' + BIN_OP_MAP[k]; }
+	init += ';\n';
 	let user = generate(ast, 0);
-	return `(()=>{ ${init}${user} })();`;
+	user = user.replace(/scope.get\(/g, '__star_scope_get(scope, ');
+	user = user.replace(/scope.set\(/g, '__star_scope_set(scope, ');
+	user = user.replace(/scope.setLocal\(/g, '__star_scope_setLocal(scope, ');
+
+	return `;()=>{ ${init}${user} }();`;
 }

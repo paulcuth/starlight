@@ -37,7 +37,7 @@ module.exports = function () {
 
 	function endStream () {
 		let file = new gulp.File();
-		file.path = 'starlight-output.lua';
+		file.path = 'starlight-output.js';
 		file.contents = Buffer.concat(output);
 
 		this.emit('data', file);
