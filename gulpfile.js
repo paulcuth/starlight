@@ -6,6 +6,12 @@ var gulp = require('gulp');
 var babel = require('gulp-babel');
 var sourcemaps = require('gulp-sourcemaps');
 var concat = require('gulp-concat');
+var uglify = require('gulp-uglify');
+var minifyHTML = require('gulp-minify-html');
+var browserify = require('browserify');
+var source = require('vinyl-source-stream');
+var buffer = require('vinyl-buffer');
+
 
 
 gulp.task('build-gulp-plugin', function () {
@@ -17,124 +23,70 @@ gulp.task('build-gulp-plugin', function () {
 });
 
 
-
-
-gulp.task('build', function () {
-    return gulp.src('src/starlight.js')
+gulp.task('build-node-runtime', function () {
+    gulp.src('src/starlight/**/*.js')
+        .pipe(sourcemaps.init())
         .pipe(babel())
-        .pipe(gulp.dest('dist'));
-});
- 
-gulp.task('compile-example', function () {
-    return gulp.src('src/example/example-es6.js')
-        .pipe(babel())
-        .pipe(concat('example.js'))
-        .pipe(gulp.dest('dist'));
-});
-
-gulp.task('copy-example', function () {
-    return gulp.src('src/example/index.html')
-        .pipe(gulp.dest('dist'));
+        .pipe(sourcemaps.write('.'))
+        .pipe(gulp.dest('dist/node/'));
 });
 
 
-gulp.task('example', function () {
+gulp.task('build-browser-runtime', ['build-node-runtime'], function () {
+  var bundler = browserify({
+    entries: 'dist/node/index.js',
+    debug: true
+  });
+
+  bundler.bundle()
+    .pipe(source('starlight.js'))
+    .pipe(buffer())
+    .pipe(uglify())
+    .pipe(gulp.dest('./dist/browser/'));
+});
+
+
+gulp.task('build-node-test', function () {
     var starlight = require('./dist/build-tools/gulp-starlight');
-    gulp.src('src/example/example.lua')
+
+    gulp.src('src/test/test.lua')
         .pipe(starlight())
-        .pipe(concat('example.lua.js'))
-        .pipe(gulp.dest('dist/example'));
-    gulp.src('src/example/index.html')
-        .pipe(gulp.dest('dist/example'));
-    gulp.src('src/starlight.js')
         .pipe(babel())
-        .pipe(concat('starlight.js'))
-        .pipe(gulp.dest('dist/example'));
+        .pipe(uglify())
+        .pipe(concat('test-node.lua.js'))
+        .pipe(gulp.dest('dist/test'));
+
+    gulp.src('src/test/index.html')
+        .pipe(minifyHTML())
+        .pipe(gulp.dest('dist/test'));
+});
+
+
+gulp.task('build-test', ['build-node-test'], function () {
+  var bundler = browserify({
+    entries: 'dist/test/test-node.lua.js',
+    debug: true
+  });
+
+  bundler.bundle()
+    .pipe(source('test-browser.lua.js'))
+    .pipe(buffer())
+    .pipe(uglify())
+    .pipe(gulp.dest('dist/test'));
 });
 
 
 gulp.task('test', function () {
-    var starlight = require('./dist/build-tools/gulp-starlight');
-
-    // Starlight ENV: Transpile and copy
-    gulp.src('src/starlight/**/*.js')
-        .pipe(sourcemaps.init())
-        .pipe(babel())
-        // .pipe(concat('starlight.js'))
-        .pipe(sourcemaps.write('.'))
-        .pipe(gulp.dest('dist/test/starlight'));
-
-    // Test script: Translate and copy
-    gulp.src('src/test/test.lua')
-        .pipe(starlight())
-        .pipe(babel())
-        .pipe(concat('test.lua.js'))
-        .pipe(gulp.dest('dist/test'));
-
-    // setTimeout(function () {
-    //     require('./dist/test/test.lua');
-    // }, 100);
-        
-});
+    require('./dist/node/index.js');
+    require('./dist/test/test-node.lua.js');
+});        
 
 
-// var translate = function () {
-
-// 	function bufferContents (file) {
-// 		var lua = hamletParser.parse(file.contents.toString()),
-// 			luaFile = file.clone();
-
-// 		if (luaFile.path.substr(-3) == '.js') luaFile.path = luaFile.path.substr(0, luaFile.path.length - 3);
-// 		luaFile.path += '.lua';
-// 		luaFile.contents = new Buffer(lua);
-
-// 		this.emit('data', luaFile);
-// 	}
-
-// 	function endStream () {
-// 		this.emit('end');
-// 	}
-
-// 	return through(bufferContents, endStream);
-// };
+gulp.task('build-all', ['build-gulp-plugin', 'build-browser-runtime'], function () {
+    gulp.tasks['build-test'].fn();
+});        
 
 
 
-
-// gulp.task('build', function () {
-// 	var files = [
-// 		'./src/runtime/core/init.lua',
-// 		'./src/runtime/core/types/Object.lua',
-// 		'./src/runtime/core/types/Function.lua',
-// 		'./src/runtime/core/abstracts.lua',
-// 		'./src/runtime/core/lang.lua',
-// 		'./src/runtime/core/env/global.lua',
-// 		'./src/runtime/core/env/Object.lua',
-// 		'./src/runtime/core/env/Function.lua',
-// 		'./src/runtime/core/env/Error.lua',
-// 		'./src/runtime/core/env/RangeError.lua',
-// 		'./src/runtime/core/env/ReferenceError.lua',
-// 		'./src/runtime/core/env/TypeError.lua',
-// 		'./src/runtime/core/env/Array.lua',
-// 		'./src/runtime/core/env/Number.lua',
-// 		'./src/runtime/core/env/String.lua',
-// 		'./src/runtime/core/env/Boolean.lua',
-// 		'./src/runtime/core/env/Math.lua',
-// 		'./src/runtime/core/env/Date.lua',
-// 		'./src/runtime/core/env/RegExp.lua',
-// 		'./src/runtime/node/console.lua',
-// 		'./src/runtime/core/cli.lua'
-// 	];
-
-// 	return gulp.src(files)
-// 		.pipe(concat('hamlet.lua'))
-// 		.pipe(gulp.dest('./out'));
-// });
-
-
-
-
-
-
-gulp.task('default', ['build', 'compile-example', 'copy-example']);
+gulp.task('default', ['build-all']);
 

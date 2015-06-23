@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en-GB" dir="ltr">
+	<head>
+		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+		<meta content="utf-8" http-equiv="encoding">
+		<title>Starlight - Test Runner</title>
+		<style>
+			@font-face {
+				font-family: "Open Sans";
+				font-style: normal;
+				font-weight: 400;
+				src: local("Open Sans"), local("OpenSans"), url("http://themes.googleusercontent.com/static/fonts/opensans/v6/cJZKeOuBrn4kERxqtaUH3T8E0i7KZn-EPnyo3HZu7kw.woff") format("woff");
+			}
+			body {
+				margin: 0;
+				padding: 0;
+				font-family: 'Open Sans';
+			}
+			h1 {
+				background-color: #d35400;
+				padding: 8px 16px;
+				margin: 5px 20px;
+				display: inline-block;
+				color: #fff;
+				font-weight: normal;
+			}
+			pre {
+				background-color: #34495e;
+				color: #ecf0f1;
+				font-family: 'Source Code Pro', 'monospace';
+				width: calc(100% - 40px);
+				height: 400px;
+				margin: 0 20px;
+				padding: 10px;
+				box-sizing: border-box;
+				overflow: auto;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Starlight</h1>
+		<pre id="output"></pre>
+		<script>
+			var pre = document.getElementById('output'),
+				output = '',
+				req;
+			
+			function escapeHTML(text) {
+			    return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+			}	
+
+			function updateOutput() {
+				if (!req) {
+					req = window.requestAnimationFrame(function() {
+						pre.textContent = output;
+						pre.scrollTo(0, 99999);
+						req = null;
+					});
+				}
+			}
+
+			window.starlight = {
+				config: {
+					stdout: {
+						writeln: function (message) {
+							output += escapeHTML(message) + '\n';
+							updateOutput();
+						}
+					},
+					env: {
+						getTimestamp: Date.now.bind(Date)
+					}
+				}
+			};
+		</script>
+		<script src="../browser/starlight.js"></script>
+		<script src="./test-browser.lua.js"></script>
+	</body>
+</html>

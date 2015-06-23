@@ -4,15 +4,11 @@ import { default as operators } from './operators';
 import { default as Table } from './Table';
 import { default as LuaError } from './LuaError';
 
-export const globalScope = new Scope(globals.strValues);
-export const _G = globals;
-export const op = operators;
-export const T = Table;
 
-export function call(f, ...args) {
+function call(f, ...args) {
 	if (typeof f === 'function') {
 		// noop
-	} else if (f instanceof T) {
+	} else if (f instanceof Table) {
 		let mt, mm;
 		if (
 			(mt = f.metatable)
@@ -34,6 +30,31 @@ export function call(f, ...args) {
 		return [result];
 	}
 }
+
+let namespace = global.starlight = global.starlight || {};
+let _G = globals;
+
+function init () {
+	let userEnv = namespace.config && namespace.config.env;
+	if (userEnv) {
+		for (let key in userEnv) {
+			globals.set(key, userEnv[key]);
+		}
+	}
+}
+
+
+init();
+
+let runtime = namespace.runtime = {
+	globalScope: new Scope(globals.strValues),
+	_G,
+	op: operators,
+	T: Table,
+	call
+};
+
+
 
 
 // The following should be configurable

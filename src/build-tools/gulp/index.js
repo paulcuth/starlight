@@ -27,18 +27,15 @@ function getAST(file) {
 
 module.exports = function () {
 	let output = [];
-	let imports = new Buffer("import * as __star from './starlight'\n");
 
 	function bufferContents (file) {
 		let ast = getAST(file);
 		let js = generateJS(ast);
-		let buf = new Buffer(`\n\n/*** Source: ${file.path} ***/\n\n${js}\n`);
+		let buf = new Buffer(`\n/*** Source: ${file.path} ***/\n${js}\n\n`);
 		output.push(buf);
 	}
 
 	function endStream () {
-		output.unshift(imports);
-
 		let file = new gulp.File();
 		file.path = 'starlight-output.lua';
 		file.contents = Buffer.concat(output);

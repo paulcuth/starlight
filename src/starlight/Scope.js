@@ -10,10 +10,10 @@ export default class Scope {
 	set(key, value) {
 		let vars = this._variables;
 
-		if (this._variables.hasOwnProperty(key) || !this._isExtension) {
+		if (this._variables.hasOwnProperty(key) || !this.parent) {
 			vars[key] = value;
 		} else {
-			this.__proto__.set(key, value);
+			this.parent.set(key, value);
 		}
 	}
 
@@ -28,8 +28,7 @@ export default class Scope {
 	extend(outerScope) {
 		let innerVars = Object.create(this._variables);
 		let scope = new Scope(innerVars);
-		scope.__proto__ = this;
-		scope._isExtension = true;
+		scope.parent = this;
 		return scope;
 	}
 }

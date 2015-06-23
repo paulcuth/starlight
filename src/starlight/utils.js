@@ -19,19 +19,24 @@ const FLOATING_POINT_PATTERN = /^[-+]?[0-9]*\.?([0-9]+([eE][-+]?[0-9]+)?)?$/;
 const HEXIDECIMAL_CONSTANT_PATTERN = /^(\-)?0x([0-9a-fA-F]*)\.?([0-9a-fA-F]*)$/;
 
 
+function defaultWriteln (...args) {
+	console.log(...args);
+}
+
 
 /********************
  * Stdout
  ********************/
 
 export const stdout = {
-	write(...args) {
-		process.stdout.write(args.join('\t'));
-	},
-
-	writeln(...args) {
-		return this.write(...args, '\n');
-	},
+	writeln: (() => {
+		let namespace, config, stdout;
+		return (namespace = global.starlight)
+			&& (config = namespace.config)
+			&& (stdout = config.stdout)
+			&& stdout.writeln
+			|| defaultWriteln;
+	})()
 };
 
 

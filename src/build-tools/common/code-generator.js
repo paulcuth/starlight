@@ -216,12 +216,11 @@ const GENERATORS = {
 
 		if (isAnonymous) {
 			return funcDef;
-		} else if (node.isLocal) {
-			return `scope.set('${identifier}', ${funcDef})`;
 		} else if (isMemberExpr) {
 			return `scope.get('${subject}').set('${property}', ${funcDef})`;
+		// } else if (node.isLocal) {
 		} else {
-			return `__star.globalScope.set('${identifier}', ${funcDef})`;
+			return `scope.set('${identifier}', ${funcDef})`;
 		}
 	},
 
@@ -490,7 +489,7 @@ function generate(ast, scope, options) {
 
 
 export function generateJS(ast) {
-	let init = 'let scope0 = __star.globalScope, scope = scope0, __star_tmp;\n';
+	let init = 'let __star = global.starlight.runtime, scope0 = __star.globalScope, scope = scope0, __star_tmp;\n';
 	let user = generate(ast, 0);
-	return `${init}${user}`;
+	return `(()=>{ ${init}${user} })();`;
 }
