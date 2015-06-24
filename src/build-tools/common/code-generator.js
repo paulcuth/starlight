@@ -146,11 +146,16 @@ const GENERATORS = {
 	},
 
 
+	ElseifClause(node, scope) {
+		return this.IfClause(node, scope);
+	},
+
+
 	ForNumericStatement(node, outerScope) {
 		let { scope, scopeDef } = extendScope(outerScope);
 		let variableName = generate(node.variable, outerScope);
-		let start = generate(node.start, outerScope);
-		let end = generate(node.end, outerScope);
+		let start = scoped(node.start, outerScope);
+		let end = scoped(node.end, outerScope);
 		let step = node.step === null ? 1 : generate(node.step, outerScope);
 		let operator = start < end ? '<=' : '>=';
 		let body = this.Chunk(node, scope);
@@ -190,8 +195,8 @@ const GENERATORS = {
 
 		let params = node.parameters.map((param, index) => {
 			let name = generate(param, scope);
-			if (name === '...scope.varargs') {
-				return `scope.varargs = args`;
+			if (name === '...scope.getVarargs()') {
+				return `scope.setVarargs(args)`;
 			} else {
 				return `scope.setLocal('${name}', args.shift())`;
 			}
@@ -212,7 +217,7 @@ const GENERATORS = {
 		let paramStr = params.join(';\n');
 		let body = this.Chunk(node, scope);
 		let prefix = isAnonymous? '' : '$';
-		let funcDef = `(__star_tmp = function ${prefix}${name}(...args){${scopeDef}\n${paramStr}\n${body} return [];}, __star_tmp.toString=()=>'function: 0x${(++functionIndex).toString(16)}', __star_tmp)`;
+		let funcDef = `(__star_tmp = function ${prefix}${name}(...args){${scopeDef}\n${paramStr};\n${body} return [];}, __star_tmp.toString=()=>'function: 0x${(++functionIndex).toString(16)}', __star_tmp)`;
 
 		if (isAnonymous) {
 			return funcDef;
@@ -428,7 +433,7 @@ const GENERATORS = {
 
 	
 	VarargLiteral(node, scope) {
-		return '...scope.varargs';
+		return '...scope.getVarargs()';
 	},
 
 
@@ -495,18 +500,10 @@ function generate(ast, scope, options) {
 
 
 export function generateJS(ast) {
-	let init = 'let __star = global.starlight.runtime, scope0 = __star.globalScope, scope = scope0, __star_tmp;\n';
-	init += 'let __star_call = __star.call, __star_T = __star.T, __star_op_bool = __star.op.bool;';
-	init += 'let __star_scope_get = Function.prototype.call.bind(__star.globalScope.constructor.prototype.get);';
-	init += 'let __star_scope_set = Function.prototype.call.bind(__star.globalScope.constructor.prototype.set);';
-	init += 'let __star_scope_setLocal = Function.prototype.call.bind(__star.globalScope.constructor.prototype.setLocal)';
-	for (let k in UNI_OP_MAP) { init += ', __star_op_' + UNI_OP_MAP[k] + ' = __star.op.' + UNI_OP_MAP[k]; }
-	for (let k in BIN_OP_MAP) { init += ', __star_op_' + BIN_OP_MAP[k] + ' = __star.op.' + BIN_OP_MAP[k]; }
-	init += ';\n';
 	let user = generate(ast, 0);
 	user = user.replace(/scope.get\(/g, '__star_scope_get(scope, ');
 	user = user.replace(/scope.set\(/g, '__star_scope_set(scope, ');
 	user = user.replace(/scope.setLocal\(/g, '__star_scope_setLocal(scope, ');
 
-	return `;()=>{ ${init}${user} }();`;
+	return user;
 }

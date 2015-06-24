@@ -49,8 +49,15 @@ gulp.task('build-browser-runtime', ['build-node-runtime'], function () {
 gulp.task('build-node-test', function () {
     var starlight = require('./dist/build-tools/gulp-starlight');
 
-    gulp.src('src/test/test.lua')
-        .pipe(starlight())
+    // gulp.src('src/test/test.lua')
+    //     .pipe(starlight())
+
+    gulp.src('src/test/lua/**/*.lua')
+        .pipe(starlight({
+            main: 'test-runner.lua',
+            basePath: 'src/test/lua'
+        }))
+
         .pipe(gulp.dest('dist/test'))
         .pipe(babel())
         .pipe(uglify())

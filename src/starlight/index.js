@@ -70,3 +70,8 @@ _G.set('string', string);
 
 import { default as os } from './lib/os';
 _G.set('os', os);
+
+import { default as _package } from './lib/package';
+_G.set('package', _package);
+
+

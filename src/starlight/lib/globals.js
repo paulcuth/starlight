@@ -18,6 +18,18 @@ const stringMetatable = new T({ __index: stringLib });
 const CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 
+
+function getPackageMethods() {
+	let packageLib = global.starlight.runtime._G.rawget('package');
+	if (packageLib === void 0) {
+		throw new LuaError('error during require(), package lib not found.');
+	}
+	let methods = [packageLib.rawget('preload'), packageLib.rawget('loaded')];
+	getPackageMethods = ()=>methods;
+	return methods;
+}
+
+
 function ipairsIterator(table, index) {
 	if (index === undefined) {
 		throw new LuaError('Bad argument #2 to ipairs() iterator');
@@ -208,6 +220,22 @@ export function rawset(table, index, value) {
 }
 
 
+export function _require(modname) {
+	modname = coerceArgToString(modname, 'require', 1);
+	let [preload, loaded] = getPackageMethods();
+
+	let modinit = preload.rawget(modname);
+	if (modinit === void 0) {
+		throw new LuaError(`module '${modname}' not found:\n\tno field package.preload['${modname}']`);
+	}
+
+	let mod = modinit(modname)[0];
+	loaded.rawset(modname, mod || true);
+
+ 	return mod;
+}
+
+
 export function select(index, ...args) {	
 	if (index === '#') {
 		return args.length;
@@ -383,6 +411,7 @@ export const _G = new T({
 	rawequal,
 	rawget,
 	rawset,
+	require: _require,
 	select,
 	setmetatable,
 	tonumber,

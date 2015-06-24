@@ -21,6 +21,14 @@ export default class Scope {
 		this._variables[key] = value;
 	}
 
+	setVarargs(value) {
+		this._varargs = value;
+	}
+
+	getVarargs() {
+		return this._varargs || this.parent && this.parent.getVarargs();
+	}
+
 	add(key, value) {
 		this._variables[key] += value;
 	}

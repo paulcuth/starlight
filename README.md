@@ -11,6 +11,7 @@ There are some async build issues at the moment related to Babel, but the follow
 gulp build-gulp-plugin
 gulp build-node-runtime
 gulp build-browser-runtime
+gulp build-node-test
 gulp build-test
 gulp test
 ```
