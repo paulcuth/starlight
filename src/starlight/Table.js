@@ -1,3 +1,5 @@
+import { default as LuaError } from './LuaError';
+import { type } from './lib/globals';
 
 
 let count = 0;
@@ -36,6 +38,10 @@ export default class Table {
 
 
 	get(key) {
+		if (!(this instanceof Table)) {
+			throw new LuaError(`attempt to index a ${type(this)} value`);
+		}
+
 		let value = this.rawget(key);
 
 		if (value === void 0) {
@@ -73,6 +79,10 @@ export default class Table {
 
 
 	set(key, value) {
+		if (!(this instanceof Table)) {
+			throw new LuaError(`attempt to index a ${type(this)} value`);
+		}
+
 		let mt, mm;
 		if (
 			(mt = this.metatable) 

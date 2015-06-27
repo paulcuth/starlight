@@ -1,4 +1,8 @@
+import { default as MemExpr } from './MemExpr';
+
 var Symbol = Symbol || { iterator: function () {} }; // Needed to get Babel to work in Node 
+
+
 
 let scopeIndex = 1;
 let functionIndex = 0;
@@ -39,16 +43,11 @@ const GENERATORS = {
 
 		let assignments = node.variables.map((variable, index) => {
 			let name;
-			if (isLookupExpression(variable)) {
-				name = generate(variable, scope, { set: `__star_tmp[${index}]` });
-				let [, root, accessor] = [].concat(name.match(/^([^.]+)(.*)$/));
-				if (root === 'scope' || root.substr(0,6) === '__star') {
-					return name;
-				} else {
-					return `scope.get('${root}')${accessor}`;
-				}
+			name = scoped(variable, scope);
+
+			if (name instanceof MemExpr) {
+				return name.set(`__star_tmp[${index}]`);
 			} else {
-				name = scoped(variable, scope);
 				let [match, subject, property] = [].concat(name.match(/^(.*).get\(([^.]+)\)$/));
 
 				if (match) {
@@ -111,14 +110,17 @@ const GENERATORS = {
 
 	CallExpression(node, scope) {
 		let functionName = scoped(node.base, scope);
-		let args = node.arguments.map((arg) => scoped(arg, scope));
+		let args = node.arguments.map(arg => {
+			let path = scoped(arg, scope);
+			let prefix = isCallExpression(arg) ? '...' : '';
+			return `${prefix}${path}`;
+		});
 
 		if (isCallExpression(node.base)) {
 			args.unshift(`${functionName}[0]`);
 		} else {
-			if (node.base.type === 'MemberExpression' && node.base.indexer === ':') {
-				let [, subject] = [].concat(functionName.match(/^(.*)\.get\('.*?'\)$/))
-				args.unshift(subject);
+			if (functionName instanceof MemExpr && node.base.indexer === ':') {
+				args.unshift(functionName.base);
 			}
 			args.unshift(`${functionName}`);
 		}
@@ -190,8 +192,8 @@ const GENERATORS = {
 	FunctionDeclaration(node, outerScope) {
 		let { scope, scopeDef } = extendScope(outerScope);
 		let isAnonymous = !node.identifier;
-		let isMemberExpr = !isAnonymous && node.identifier.type === 'MemberExpression';
 		let identifier = isAnonymous ? '' : generate(node.identifier, outerScope);
+		let isMemberExpr = identifier instanceof MemExpr;
 
 		let params = node.parameters.map((param, index) => {
 			let name = generate(param, scope);
@@ -202,10 +204,9 @@ const GENERATORS = {
 			}
 		});
 
-		let name, subject, property;
+		let name;
 		if (isMemberExpr) {
-			[, subject, property] = [].concat(identifier.match(/^(.*)\.get\('(.*?)'\)$/))
-			name = property;
+			name = identifier.property.replace(/'/g, '');
 
 			if (node.identifier.indexer === ':') {
 				params.unshift("scope.set('self', args.shift())");
@@ -216,14 +217,13 @@ const GENERATORS = {
 
 		let paramStr = params.join(';\n');
 		let body = this.Chunk(node, scope);
-		let prefix = isAnonymous? '' : '$';
+		let prefix = isAnonymous? '' : 'func$';
 		let funcDef = `(__star_tmp = function ${prefix}${name}(...args){${scopeDef}\n${paramStr};\n${body} return [];}, __star_tmp.toString=()=>'function: 0x${(++functionIndex).toString(16)}', __star_tmp)`;
 
 		if (isAnonymous) {
 			return funcDef;
 		} else if (isMemberExpr) {
-			return `scope.get('${subject}').set('${property}', ${funcDef})`;
-		// } else if (node.isLocal) {
+			return identifier.set(funcDef);
 		} else {
 			return `scope.set('${identifier}', ${funcDef})`;
 		}
@@ -248,19 +248,19 @@ const GENERATORS = {
 	},
 
 
-	IndexExpression(node, scope, options = {}) {
+	IndexExpression(node, scope) {
 		let base = scoped(node.base, scope);
 		let index = scoped(node.index, scope);
+
+		if (isCallExpression(node.base)) {
+			base += '[0]';
+		}
 
 		if (isCallExpression(node.index)) {
 			index += '[0]';
 		}
 
-		if ('set' in options) {
-			return `${base}.set(${index}, ${options.set})`;
-		} else {
-			return `${base}.get(${index})`;
-		}
+		return new MemExpr(base, index);
 	},
 
 
@@ -302,23 +302,15 @@ const GENERATORS = {
 	},
 
 
-	MemberExpression(node, scope, options = {}) {
-		let base = generate(node.base, scope);
+	MemberExpression(node, scope) {
+		let base = scoped(node.base, scope);
 		let identifier = generate(node.identifier, scope);
 
 		if (isCallExpression(node.base)) {
 			base += '[0]';
 		}
 
-		if (isCallExpression(node.identifier)) {
-			identifier += '[0]';
-		}
-
-		if ('set' in options) {
-			return `${base}.set('${identifier}', ${options.set})`;
-		} else {
-			return `${base}.get('${identifier}')`;
-		}
+		return new MemExpr(base, `'${identifier}'`);
 	},
 
 
@@ -351,18 +343,8 @@ const GENERATORS = {
 
 
 	StringCallExpression(node, scope) {
-		let functionName = scoped(node.base, scope);
-		let args = [generate(node.argument, scope)];
-
-		if (isCallExpression(node.base)) {
-			return `__star_call(${functionName}[0],${args})`;
-		} else {
-			if (node.base.type === 'MemberExpression' && node.base.indexer === ':') {
-				let [, subject] = [].concat(functionName.match(/^(.*)\.get\('.*?'\)$/))
-				args.unshift(subject);
-			}
-			return `__star_call(${functionName},${args})`;
-		}
+		node.arguments = node.argument;
+		return this.TableCallExpression(node, scope);
 	},
 
 
@@ -379,9 +361,8 @@ const GENERATORS = {
 		if (isCallExpression(node.base)) {
 			return `__star_call(${functionName}[0],${args})`;
 		} else {
-			if (node.base.type === 'MemberExpression' && node.base.indexer === ':') {
-				let [, subject] = [].concat(functionName.match(/^(.*)\.get\('.*?'\)$/))
-				args.unshift(subject);
+			if (functionName instanceof MemExpr && node.base.indexer === ':') {
+				args.unshift(functionName.base);
 			}
 			return `__star_call(${functionName},${args})`;
 		}
@@ -411,7 +392,7 @@ const GENERATORS = {
 	TableValue(node, scope) {
 		let value = scoped(node.value, scope);
 		let operator = isCallExpression(node.value) ? '...' : '';
-		return `t.insert(${operator}${value})`;
+		return `Tins(t, ${operator}${value})`;
 	},
 
 
@@ -457,33 +438,12 @@ function extendScope(outerIndex) {
 
 function scoped(node, scope) {
 	let value = generate(node, scope);
-	switch (node.type) {
-		case 'Identifier': 
-			return `scope.get('${value}')`;
-
-		case 'MemberExpression':
-			let [_, root, path, property] = value.match(/^([^.]+)\.(.*\.)?get\('([^.]+)'\)$/);
-			path = path || '';
-			if (root === 'scope' || root.substr(0,6) === '__star') {
-				return value;	
-			} else {
-				return `scope.get('${root}').${path}get('${property}')`;
-			}
-
-		default: 
-			return value;
-	}
+	return node.type === 'Identifier' ? `scope.get('${value}')` : value;
 }
 
 
 function isCallExpression(node) {
 	return !!node.type.match(/CallExpression$/);
-}
-
-
-function isLookupExpression(node) {
-	let type = node.type;
-	return type === 'MemberExpression' || type === 'IndexExpression';
 }
 
 
