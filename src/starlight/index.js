@@ -5,30 +5,29 @@ import { default as Table } from './Table';
 import { default as LuaError } from './LuaError';
 
 
+function ensureArray(value) {
+	return (value instanceof Array) ? value : [value];
+}
+
 function call(f, ...args) {
-	if (typeof f === 'function') {
-		// noop
-	} else if (f instanceof Table) {
-		let mt, mm;
-		if (
-			(mt = f.metatable)
-			&& (mm = mt.rawget('__call'))
-		) {
-			args.unshift(f);
-			f = mm;
+	if (!(f instanceof Function)) {
+		if (f instanceof Table) {
+			let mt, mm;
+			if (
+				(mt = f.metatable)
+				&& (mm = mt.rawget('__call'))
+			) {
+				args.unshift(f);
+				f = mm;
+			}
 		}
-	} else {
-		let typ = type(f);
-		throw new LuaError(`attempt to call a ${typ} value`);
+		if (!(f instanceof Function)) {
+			let typ = type(f);
+			throw new LuaError(`attempt to call a ${typ} value`);
+		}
 	}
 
-	let result = f(...args);
-
-	if (result instanceof Array) {
-		return result;
-	} else {
-		return [result];
-	}
+	return ensureArray(f(...args));
 }
 
 let namespace = global.starlight = global.starlight || {};

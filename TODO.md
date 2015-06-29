@@ -16,8 +16,6 @@ Things to be revisited later:
 
 Roadmap:
 
-- Rewrite the whole MemberExpression mess
-- Remove member expressions in output; add: Tget, Tset, Tinsert, $, $get, $set, etc
 - Coroutines
 - Parse in browser
 - dump/loadfile/etc

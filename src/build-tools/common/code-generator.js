@@ -48,14 +48,12 @@ const GENERATORS = {
 			if (name instanceof MemExpr) {
 				return name.set(`__star_tmp[${index}]`);
 			} else {
-				let [match, subject, property] = [].concat(name.match(/^(.*).get\(([^.]+)\)$/));
-
-				if (match) {
-					return `${subject}.set(${property}, __star_tmp[${index}])`;
-				} else {
-					console.info(name);
-					throw new Error('Unhandled'); // TODO: Remove
+				let [match, args] = [].concat(name.match(/^\$get\((.*)\)$/));
+				if (!match) {
+					throw new Error('Unhandled'); 
 				}
+
+				return `$set(${args}, __star_tmp[${index}])`;
 			}
 		}).join(';\n');
 
@@ -163,11 +161,10 @@ const GENERATORS = {
 		let body = this.Chunk(node, scope);
 		let loopIndex = ++forLoopIndex;
 
-		// let defs = scopeDef.split(', ');
-		let init = `scope${outerScope}._forLoop${loopIndex} = ${start}`;
-		let cond = `scope${outerScope}._forLoop${loopIndex} ${operator} ${end}`;
-		let after = `scope${outerScope}._forLoop${loopIndex} += ${step}`;
-		let varInit = `scope${scope}.setLocal('${variableName}',scope${outerScope}._forLoop${loopIndex});`;
+		let init = `$${outerScope}._forLoop${loopIndex} = ${start}`;
+		let cond = `$${outerScope}._forLoop${loopIndex} ${operator} ${end}`;
+		let after = `$${outerScope}._forLoop${loopIndex} += ${step}`;
+		let varInit = `$${scope}.setLocal('${variableName}',$${outerScope}._forLoop${loopIndex});`;
 		return `for (${init}; ${cond}; ${after}) {\n${scopeDef}\n${varInit}\n${body}\n}`;
 	},
 
@@ -180,11 +177,11 @@ const GENERATORS = {
 
 		let variables = node.variables.map((variable, index) => {
 			let name = generate(variable, scope);
-			return `scope.setLocal('${name}', __star_tmp[${index}])`;
+			return `$setLocal($, '${name}', __star_tmp[${index}])`;
 		}).join(';\n');
 
 		let defs = scopeDef.split(', ');
-		return `${defs[0]};\n[scope${scope}._iterator, scope${scope}._table, scope${scope}._next] = ${iterator};\nwhile((__star_tmp = __star_call(scope${scope}._iterator, scope${scope}._table, scope${scope}._next)),__star_tmp[0] !== undefined) {\nlet ${defs[1]}\nscope${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
+		return `${defs[0]};\n[$${scope}._iterator, $${scope}._table, $${scope}._next] = ${iterator};\nwhile((__star_tmp = __star_call($${scope}._iterator, $${scope}._table, $${scope}._next)),__star_tmp[0] !== undefined) {\nlet ${defs[1]}\$${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
 
 	},
 
@@ -197,10 +194,10 @@ const GENERATORS = {
 
 		let params = node.parameters.map((param, index) => {
 			let name = generate(param, scope);
-			if (name === '...scope.getVarargs()') {
-				return `scope.setVarargs(args)`;
+			if (name === '...$.getVarargs()') {
+				return `$.setVarargs(args)`;
 			} else {
-				return `scope.setLocal('${name}', args.shift())`;
+				return `$setLocal($, '${name}', __star_shift(args))`;
 			}
 		});
 
@@ -209,7 +206,7 @@ const GENERATORS = {
 			name = identifier.property.replace(/'/g, '');
 
 			if (node.identifier.indexer === ':') {
-				params.unshift("scope.set('self', args.shift())");
+				params.unshift("$set($, 'self', __star_shift(args))");
 			}
 		} else {
 			name = identifier;
@@ -225,7 +222,7 @@ const GENERATORS = {
 		} else if (isMemberExpr) {
 			return identifier.set(funcDef);
 		} else {
-			return `scope.set('${identifier}', ${funcDef})`;
+			return `$set($, '${identifier}', ${funcDef})`;
 		}
 	},
 
@@ -268,7 +265,7 @@ const GENERATORS = {
 		let canOptimise = true;
 		let assignments = node.variables.map((variable, index) => {
 			let name = generate(variable, scope);
-			return `scope.setLocal('${name}', __star_tmp[${index}])`;
+			return `$setLocal($, '${name}', __star_tmp[${index}])`;
 		}).join(';\n');
 
 		let values = node.init.map((init, index) => {
@@ -378,14 +375,14 @@ const GENERATORS = {
 	TableKeyString(node, scope) {
 		let name = generate(node.key, scope);
 		let value = scoped(node.value, scope);
-		return `t.set('${name}', ${value})`;
+		return `Tset(t, '${name}', ${value})`;
 	},
 
 
 	TableKey(node, scope) {
 		let name = generate(node.key, scope);
 		let value = scoped(node.value, scope);
-		return `t.set(${name}, ${value})`;
+		return `Tset(t, ${name}, ${value})`;
 	},
 
 
@@ -413,8 +410,8 @@ const GENERATORS = {
 	},
 
 	
-	VarargLiteral(node, scope) {
-		return '...scope.getVarargs()';
+	VarargLiteral(node) {
+		return '...$.getVarargs()';
 	},
 
 
@@ -431,14 +428,14 @@ const GENERATORS = {
 
 function extendScope(outerIndex) {
 	let scope = scopeIndex++;
-	let scopeDef = `let scope${scope} = scope${outerIndex}.extend(), scope = scope${scope};`;
+	let scopeDef = `let $${scope} = $${outerIndex}.extend(), $ = $${scope};`;
 	return { scope, scopeDef };
 }
 
 
 function scoped(node, scope) {
 	let value = generate(node, scope);
-	return node.type === 'Identifier' ? `scope.get('${value}')` : value;
+	return node.type === 'Identifier' ? `$get($, '${value}')` : value;
 }
 
 
@@ -447,7 +444,7 @@ function isCallExpression(node) {
 }
 
 
-function generate(ast, scope, options) {
+function generate(ast, scope) {
 	let generator = GENERATORS[ast.type];
 
 	if (!generator) {
@@ -455,15 +452,10 @@ function generate(ast, scope, options) {
 		throw new Error(`No generator found for: ${ast.type}`);
 	}
 
-	return generator.call(GENERATORS, ast, scope, options);
+	return generator.call(GENERATORS, ast, scope);
 }
 
 
 export function generateJS(ast) {
-	let user = generate(ast, 0);
-	user = user.replace(/scope.get\(/g, '__star_scope_get(scope, ');
-	user = user.replace(/scope.set\(/g, '__star_scope_set(scope, ');
-	user = user.replace(/scope.setLocal\(/g, '__star_scope_setLocal(scope, ');
-
-	return user;
+	return generate(ast, 0);
 }

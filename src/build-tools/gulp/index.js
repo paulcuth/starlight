@@ -15,24 +15,19 @@ function getAST(buffer) {
 
 
 function getRuntimeInit() {
-	let init = 'let __star = global.starlight.runtime, scope0 = __star.globalScope, scope = scope0, __star_tmp;\n';
+	let init = 'let __star = global.starlight.runtime, $0 = __star.globalScope, $ = $0, __star_tmp;\n';
 	init += 'let __star_call = __star.call, __star_T = __star.T, __star_op_bool = __star.op.bool;';
 	init += 'let __star_op_unm = __star.op.unm, __star_op_not = __star.op.not, __star_op_len = __star.op.len, __star_op_concat = __star.op.concat, __star_op_add = __star.op.add, __star_op_sub = __star.op.sub, __star_op_mul = __star.op.mul, __star_op_div = __star.op.div, __star_op_mod = __star.op.mod, __star_op_eq = __star.op.eq, __star_op_neq = __star.op.neq, __star_op_lt = __star.op.lt, __star_op_gt = __star.op.gt, __star_op_lte = __star.op.lte, __star_op_gte = __star.op.gte, __star_op_pow = __star.op.pow;\n';
 	
-	init += 'let Tget, Tset, Tins;';
-	init += 'let __star_scope_get, __star_scope_set, __star_scope_setLocal;'; // TODO rename
+	init += 'let Tget, Tset, Tins, $get, $set, $setLocal, __star_shift;';
 
 	init += '()=>{';
 	init += 'let call = Function.prototype.call, bind = call.bind.bind(call), Tproto = __star_T.prototype, $proto = __star.globalScope.constructor.prototype;';
 
 	init += 'Tget = bind(Tproto.get), Tset = bind(Tproto.set), Tins = bind(Tproto.insert);';
-
-	init += '__star_scope_get = bind($proto.get);';
-	init += '__star_scope_set = bind($proto.set);';
-	init += '__star_scope_setLocal = bind($proto.setLocal);';
-
+	init += '$get = bind($proto.get), $set = bind($proto.set), $setLocal = bind($proto.setLocal);';
+	init += '__star_shift = bind(Array.prototype.shift);';
 	init += '}();'
-
 
 	return init;
 }
