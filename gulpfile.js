@@ -61,14 +61,14 @@ gulp.task('build-browser-runtime', ['build-node-runtime'], function () {
 gulp.task('build-node-test', function () {
     var starlight = require('./dist/build-tools/gulp-starlight');
 
-    // gulp.src('src/test/test.lua')
-    //     .pipe(starlight())
+    gulp.src('src/test/test.lua')
+        .pipe(starlight())
 
-    gulp.src('src/test/lua/**/*.lua')
-        .pipe(starlight({
-            main: 'test-runner.lua',
-            basePath: 'src/test/lua'
-        }))
+    // gulp.src('src/test/lua/**/*.lua')
+    //     .pipe(starlight({
+    //         main: 'test-runner.lua',
+    //         basePath: 'src/test/lua'
+    //     }))
 
         .pipe(gulp.dest('dist/test'))
         .pipe(babel())
@@ -101,6 +101,39 @@ gulp.task('test', function () {
     require('./dist/node/index.js');
     require('./dist/test/test-node.lua.js');
 });        
+
+
+gulp.task('build-node-parser', function () {
+    gulp.src(['src/parser/index.js', 'src/build-tools/common/*.js'])
+        .pipe(sourcemaps.init())
+        .pipe(babel())
+        .pipe(sourcemaps.write('.'))
+        .pipe(gulp.dest('dist/node/parser'));
+});
+
+
+gulp.task('build-browser-parser', function () {
+    var bundler = browserify({
+        entries: 'dist/node/parser/index.js',
+        debug: true
+    });
+
+    bundler.bundle()
+        .pipe(source('parser.js'))
+        .pipe(buffer())
+        .pipe(uglify())
+        .pipe(gulp.dest('dist/browser'));
+});
+
+gulp.task('build-browser-babel', function () {
+    gulp.src('node_modules/babel/node_modules/babel-core/browser.min.js')
+        .pipe(uglify())
+        .pipe(concat('babel.js'))
+        .pipe(gulp.dest('dist/browser'));
+
+});
+
+
 
 
 gulp.task('build-all', ['build-gulp-plugin', 'build-browser-runtime'], function () {

@@ -35,6 +35,7 @@ npm install
 
 Build the Gulp plugin:
 ```
+npm install
 gulp build-gulp-plugin
 ```
 
