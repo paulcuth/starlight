@@ -67,6 +67,14 @@ assertTrue (b[1]() == 1, 'Local within a closure should keep its value [1]')
 assertTrue (b[2]() == 2, 'Local within a closure should keep its value [2]')
 assertTrue (b[3]() == 3, 'Local within a closure should keep its value [3]')
 
+b = ''
+i = 1
+for i = 1, 4 do
+	b = b..i
+	break
+end
+assertTrue (b == '1', 'Break should exit numerical for loop')
+
 
 a = ''
 u = {['@!#'] = 'qbert', [{}] = 1729, [6.28] = 'tau', [function () end] = 'test'}
@@ -80,6 +88,16 @@ assertTrue (string.find(a, '[6.28==tau]') ~= nil, 'for/pairs iteration should in
 assertTrue (string.find(a, '[@!#==qbert]') ~= nil, 'for/pairs iteration should include items with string as key.')
 assertTrue (string.find(a, '[table: 0x%d+==1729]') ~= nil, 'for/pairs iteration should include items with table as key.')
 assertTrue (string.find(a, '[function: 0x%d+==test]') ~= nil, 'for/pairs iteration should include items with function as key.')
+
+a = ''
+t = {1,2,3}
+for key, val in pairs(t) do
+	a = a..'['..tostring(key)..'=='..tostring(val)..']'
+	break
+end
+assertTrue (a == '[1==1]', 'Break should exit generic for loop')
+
+
 
 
 a = ''
@@ -110,6 +128,15 @@ assertTrue (b[1]() == 1, 'Local within a while loop closure should keep its valu
 assertTrue (b[2]() == 2, 'Local within a while loop closure should keep its value [2]')
 assertTrue (b[3]() == 3, 'Local within a while loop closure should keep its value [3]')
 
+b = ''
+i = 1
+while i < 4 do
+	b = b..i
+	i = i + 1
+	break
+end
+assertTrue (b == '1', 'Break should exit while loop')
+
 
 
 a = ''
@@ -139,6 +166,19 @@ until i == 4
 assertTrue (b[1]() == 1, 'Local within a while loop closure should keep its value [1]')
 assertTrue (b[2]() == 2, 'Local within a while loop closure should keep its value [2]')
 assertTrue (b[3]() == 3, 'Local within a while loop closure should keep its value [3]')
+
+
+b = ''
+i = 1
+repeat
+	b = b..i
+	i = i + 1
+	break
+until i == 4
+assertTrue (b == '1', 'Break should exit repeat loop')
+
+
+
 
 a = ':'
 t = { 123, 456, x = 789, 10 }

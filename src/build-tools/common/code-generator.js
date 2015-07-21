@@ -101,6 +101,11 @@ const GENERATORS = {
 	},
 
 
+	BreakStatement(node) {
+		return 'break';
+	},
+
+
 	CallStatement(node, scope) {
 		return generate(node.expression, scope);
 	},
