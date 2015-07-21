@@ -14,7 +14,7 @@ npm install
 Build the Grunt plugin:
 ```
 grunt grunt-plugin
-npm link dist/build-tools/grunt-plugin
+npm link dist/build-tools/grunt-starlight
 ```
 
 Build runtime, transpile tests, then run:
