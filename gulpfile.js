@@ -23,6 +23,18 @@ gulp.task('build-gulp-plugin', function () {
 });
 
 
+gulp.task('build-grunt-plugin', function () {
+    gulp.src([
+        './src/build-tools/common/*.*',
+    ]).pipe(babel())
+        .pipe(gulp.dest('./dist/build-tools/grunt-starlight/lib'));
+
+    gulp.src([
+        './src/build-tools/grunt/**/*.*'
+    ]).pipe(gulp.dest('./dist/build-tools/grunt-starlight'));
+});
+
+
 gulp.task('build-node-runtime', function () {
     gulp.src('src/starlight/**/*.js')
         .pipe(sourcemaps.init())

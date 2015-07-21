@@ -19,5 +19,6 @@ Roadmap:
 - Coroutines
 - Parse in browser
 - dump/loadfile/etc
+- Allow plug-ins
 - Customisation of environment at build-time
 - string.format()
