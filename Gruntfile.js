@@ -20,6 +20,14 @@ module.exports = function(grunt) {
 			runtime: {
 				src: 'dist/browser/starlight.js',
 				dest: 'dist/browser/starlight.js'
+			},
+			parser: {
+				src: 'dist/browser/parser.js',
+				dest: 'dist/browser/parser.js'
+			},
+			babel: {
+				src: 'node_modules/babel/node_modules/babel-core/browser.min.js',
+				dest: 'dist/browser/babel.js'
 			}
 		},
 		babel: {
@@ -48,7 +56,29 @@ module.exports = function(grunt) {
 			test: {
 				src: 'dist/test/test.lua.js',
 				dest: 'dist/test/test.lua.js'
-			}
+			},
+			parser: {
+				files: [
+					{
+						expand: true,
+						src: ['index.js'],
+						cwd: 'src/parser/',
+						dest: 'dist/node/parser/',
+						ext: '.js'
+					}
+				]
+			},
+			'parser-codegen': {
+				files: [
+					{
+						expand: true,
+						src: ['*.js'],
+						cwd: 'src/build-tools/common/',
+						dest: 'dist/node/parser/',
+						ext: '.js'
+					}
+				]
+			},
 		},
 		copy: {
 			'grunt-plugin': {
@@ -77,6 +107,11 @@ module.exports = function(grunt) {
 				files: {
 					'dist/test/test.lua.js': ['dist/test/test.lua.js'],
 				}
+			},
+			parser: {
+				files: {
+					'dist/browser/parser.js': ['dist/node/parser/index.js'],
+				}
 			}
 		}
 	});
@@ -90,6 +125,7 @@ module.exports = function(grunt) {
 	grunt.registerTask('grunt-plugin', ['copy:grunt-plugin', 'babel:grunt-plugin-common']);
 	grunt.registerTask('runtime', ['babel:runtime', 'browserify:runtime', 'uglify:runtime']);
 	grunt.registerTask('test', ['starlight:test', 'babel:test', 'browserify:test', 'uglify:test', 'copy:test']);
+	grunt.registerTask('parser', ['babel:parser', 'babel:parser-codegen', 'browserify:parser', 'uglify:parser', 'uglify:babel']);
 
 	grunt.registerTask('run-test', function () {
 	    global.starlight = { config: { env: { getTimestamp: Date.now.bind(Date) } } };
