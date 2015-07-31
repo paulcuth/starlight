@@ -7,7 +7,8 @@ import {
 	coerceToString, 
 	coerceToBoolean,
 	coerceArgToNumber, 
-	coerceArgToString
+	coerceArgToString,
+	coerceArgToFunction
 } from '../utils';
 
 
@@ -93,6 +94,11 @@ export function char(...bytes) {
 
 
 // TODO string.dump(function)
+export function dump(func) {
+	func = coerceArgToFunction(func, 'dump', 1);
+	return Function.prototype.toString.call(func);
+}
+
 
 
 export function find(s, pattern, init = 1, plain = false) {
@@ -277,6 +283,7 @@ export function upper(s) {
 export default new T({
 	byte, 
 	char,
+	dump,
 	find,
 	gmatch,
 	gsub,

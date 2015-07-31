@@ -104,6 +104,19 @@ export function loadstring(str, chunkname) {
 		throw new Error('Starlight parser not found in call to loadstring(). The parser is required to execute Lua strings at runtime.');
 	}
 
+	let match = str.replace(/\n/g,'').match(/^function \(\){(.*)}$/);
+	if (match) {
+		let [, body] = match;
+
+		match = body.match(/([A-Za-z0-9_$]+)\.extend\(\)/)
+		if (match) {
+			let [, scopeVar] = match;
+			body = `var global = this; ${scopeVar} = global.starlight.runtime.globalScope;${body}`;
+		}
+
+		return new Function(body);
+	}
+
 	try {
 		return parser.parse(str);
 	} catch (e) {

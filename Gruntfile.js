@@ -128,8 +128,10 @@ module.exports = function(grunt) {
 	grunt.registerTask('parser', ['babel:parser', 'babel:parser-codegen', 'browserify:parser', 'uglify:parser', 'uglify:babel']);
 
 	grunt.registerTask('run-test', function () {
+	    global.babel = { 
+	    	transform: require('./node_modules/babel').transform
+	    };
 	    global.starlight = { config: { env: { getTimestamp: Date.now.bind(Date) } } };
-	    require('./node_modules/babel');
 	    require('./dist/node/parser/index.js');
 	    require('./dist/node/index.js');
     	require('./dist/test/test.lua.js');
