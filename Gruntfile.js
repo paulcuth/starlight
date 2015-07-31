@@ -129,6 +129,8 @@ module.exports = function(grunt) {
 
 	grunt.registerTask('run-test', function () {
 	    global.starlight = { config: { env: { getTimestamp: Date.now.bind(Date) } } };
+	    require('./node_modules/babel');
+	    require('./dist/node/parser/index.js');
 	    require('./dist/node/index.js');
     	require('./dist/test/test.lua.js');
 	})

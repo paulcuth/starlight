@@ -156,7 +156,7 @@ assertTrue (not r.half, 'ipairs() should not iterate over non-integer numeric ke
 -- if (arg and arg[-1] == 'moonshine') then
 -- 	src = '{"sourceName":"@test.lua","lineDefined":0,"lastLineDefined":0,"upvalueCount":0,"paramCount":0,"is_vararg":2,"maxStackSize":2,"instructions":[1,0,0,0,30,0,2,0,30,0,1,0],"constants":["hello"],"functions":[],"linePositions":[82,82,82],"locals":[],"upvalues":[],"sourcePath":"./test.lua"}'
 -- else
--- 	src = 'return "hello"'
+	-- src = 'return "hello"'
 -- end
 
 -- local index = 0
@@ -201,13 +201,15 @@ assertTrue (not r.half, 'ipairs() should not iterate over non-integer numeric ke
 
 
 
--- -- loadstring
+-- loadstring
 
--- local f = loadstring(src)
--- assertTrue (type(f) == 'function', 'loadstring() should return a function when passed a valid source string')
+local src = 'return "hello"'
 
--- local result = f()
--- assertTrue (result == 'hello', 'The function returned from loadstring() should return the value from the script')
+local f = loadstring(src)
+assertTrue (type(f) == 'function', 'loadstring() should return a function when passed a valid source string')
+
+local result = f()
+assertTrue (result == 'hello', 'The function returned from loadstring() should return the value from the script')
 
 -- local s = string.dump(function () return 'bar' end)
 -- f = loadstring(s)

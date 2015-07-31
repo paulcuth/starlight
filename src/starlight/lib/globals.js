@@ -94,7 +94,22 @@ export function ipairs(t) {
 
 // TODO load(func [, chunkname])
 // TODO loadfile([filename])
-// TODO loadstring(string [, chunkname])
+
+
+export function loadstring(str, chunkname) {
+	str = coerceArgToString(str, 'loadstring', 1);
+	let parser = global.starlight.parser;
+
+	if (!parser) {
+		throw new Error('Starlight parser not found in call to loadstring(). The parser is required to execute Lua strings at runtime.');
+	}
+
+	try {
+		return parser.parse(str);
+	} catch (e) {
+		return [undefined, e.message];
+	}
+}
 
 
 export function next(table, index) {
@@ -404,6 +419,7 @@ export const _G = new T({
 	error,
 	getmetatable,
 	ipairs,
+	loadstring,
 	next,
 	pairs,
 	pcall,

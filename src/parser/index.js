@@ -5,17 +5,26 @@ if (typeof global === undefined) {
 	global = window;
 }
 
-function parse (input) {
+
+function parseToString (input) {
 	let ast = parser.parse(input);
 	let js = getRuntimeInit() + generateJS(ast);
 	let babel = global.babel;
-
+	
+	js = `()=>{ ${js} }`;
 	if (babel) {
-		return new Function('var global = global || window;' + babel.transform(js).code);
-	} else {
-		return new Function('var global = global || window;' + js);
+		js = babel.transform(js).code;
+		js = js.replace(/^'use strict';\s*/, '').replace(/;$/, '');
 	}
+
+	return js;
 }
 
+
+function parse (input) {
+	return (new Function(`var global = this; return(${parseToString(input)}).apply(this, arguments);`)).bind(global||window);
+}
+
+
 global.starlight = global.starlight || {};
-global.starlight.parser = { parse };
+global.starlight.parser = { parse, parseToString };

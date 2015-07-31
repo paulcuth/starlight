@@ -16,10 +16,16 @@ Things to be revisited later:
 
 Roadmap:
 
-- Parse in browser
 - dump/loadfile/etc
+	- string.dump()
+	- load()
+	- loadfile()
+- Make current tests focus on functionality, 
+	-> add tests for speed.
+- Publish Grunt plugin
+- Publish Bower package
 - Allow plug-ins
+	-> Coroutines
 - Customisation of environment at build-time
 - string.format()
-- Coroutines
 
