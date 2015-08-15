@@ -31,7 +31,7 @@ function getPackageMethods() {
 
 
 function ipairsIterator(table, index) {
-	if (index === undefined) {
+	if (index === void 0) {
 		throw new LuaError('Bad argument #2 to ipairs() iterator');
 	}
 
@@ -162,7 +162,7 @@ export function next(table, index) {
 				if (!found) {
 					if (i === index) found = true;
 	
-				} else if (numValues[i] !== undefined) {
+				} else if (numValues[i] !== void 0) {
 					return [i, numValues[i]];
 				}
 			}
@@ -174,7 +174,7 @@ export function next(table, index) {
 			if (!found) {
 				if (i == index) found = true;
 
-			} else if (table.strValues[i] !== undefined) {
+			} else if (table.strValues[i] !== void 0) {
 				return [i, table.strValues[i]];
 			}
 		}
@@ -187,7 +187,7 @@ export function next(table, index) {
 			if (!found) {
 				if (key === index) found = true;
 
-			} else if (table.values[i] !== undefined) {
+			} else if (table.values[i] !== void 0) {
 				return [key, table.values[i]];
 			}
 		}
@@ -241,7 +241,7 @@ export function rawget(table, index) {
 
 export function rawset(table, index, value) {
 	table = coerceArgToTable(table, 'rawset', 1);
-	if (index === undefined) throw new LuaError('table index is nil');
+	if (index === void 0) throw new LuaError('table index is nil');
 
 	table.rawset(index, value);
 	return table;
@@ -258,7 +258,7 @@ export function _require(modname) {
 	}
 
 	let mod = modinit(modname)[0];
-	loaded.rawset(modname, mod || true);
+	loaded.rawset(modname, mod !== void 0 ? mod : true);
 
  	return mod;
 }
@@ -283,7 +283,7 @@ export function select(index, ...args) {
 
 export function setmetatable(table, metatable) {
 	table = coerceArgToTable(table, 'setmetatable', 1);
-	if (metatable !== undefined) {
+	if (metatable !== void 0) {
 		metatable = coerceArgToTable(metatable, 'setmetatable', 2);
 	}
 
@@ -313,7 +313,7 @@ export function tonumber(e, base = 10) {
 		return e;
 	}
 
-	if (base != 10 && e == undefined) {
+	if (base != 10 && e === void 0) {
 		throw new LuaError("bad argument #1 to 'tonumber' (string expected, got nil)");
 	}
 
@@ -346,7 +346,7 @@ export function tostring(e) {
 	let mt, mm;
 
 	if (
-		e !== undefined 
+		e !== void 0 
 		&& e instanceof T 
 		&& (mt = e.metatable) 
 		&& (mm = mt.rawget('__tostring'))
@@ -390,7 +390,7 @@ export function unpack(table, i = 1, j) {
 	table = coerceArgToTable(table, 'unpack', 1);
 	i = coerceArgToNumber(i, 'unpack', 2);
 
-	if (j === undefined) {
+	if (j === void 0) {
 		j = getn(table);
 	} else {
 		j = coerceArgToNumber(j, 'unpack', 3);
@@ -412,7 +412,7 @@ export function xpcall(func, err) {
 		success = true;
 		
 	} catch (e) {
-		result = err(undefined, true)[0];
+		result = err(void 0, true)[0];
 		success = false;
 	}
 

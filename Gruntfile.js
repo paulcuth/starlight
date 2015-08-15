@@ -12,6 +12,17 @@ module.exports = function(grunt) {
 				}
 			}
 		},
+		concat: {
+			'kitchen-sink': {
+				src: [
+					'dist/browser/starlight.js',
+					'src/DOMAPI/DOMAPI.js',
+					'node_modules/babel/node_modules/babel-core/browser.min.js',
+					'dist/browser/parser.js'
+				],
+				dest: 'dist/kitchen-sink/starlight.js'
+			}
+		},
 		uglify: {
 			test: {
 				src: 'dist/test/test.lua.js',
@@ -28,6 +39,10 @@ module.exports = function(grunt) {
 			babel: {
 				src: 'node_modules/babel/node_modules/babel-core/browser.min.js',
 				dest: 'dist/browser/babel.js'
+			},
+			'kitchen-sink': {
+				src: 'dist/kitchen-sink/starlight.js',
+				dest: 'dist/kitchen-sink/starlight.js'
 			}
 		},
 		babel: {
@@ -95,6 +110,12 @@ module.exports = function(grunt) {
 			test: {
 				src: 'src/test/index.html',
 				dest: 'dist/test/index.html'
+			},
+			'kitchen-sink': {
+				files: {
+					'dist/kitchen-sink/index.html': 'src/kitchen-sink/example.html',
+					'dist/kitchen-sink/README.md': 'src/kitchen-sink/README.md'
+				}
 			}
 		},
 		browserify: {
@@ -120,12 +141,14 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 	grunt.loadNpmTasks('grunt-babel');
 	grunt.loadNpmTasks('grunt-contrib-copy');
+	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-browserify');
 
 	grunt.registerTask('grunt-plugin', ['copy:grunt-plugin', 'babel:grunt-plugin-common']);
 	grunt.registerTask('runtime', ['babel:runtime', 'browserify:runtime', 'uglify:runtime']);
 	grunt.registerTask('test', ['starlight:test', 'babel:test', 'browserify:test', 'uglify:test', 'copy:test']);
 	grunt.registerTask('parser', ['babel:parser', 'babel:parser-codegen', 'browserify:parser', 'uglify:parser', 'uglify:babel']);
+	grunt.registerTask('kitchen-sink', ['babel:runtime', 'browserify:runtime', 'babel:parser', 'babel:parser-codegen', 'browserify:parser', 'concat:kitchen-sink', 'uglify:kitchen-sink', 'copy:kitchen-sink']);
 
 	grunt.registerTask('run-test', function () {
 	    global.babel = { 

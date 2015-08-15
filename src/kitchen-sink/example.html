@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en-GB" dir="ltr">
+	<head>
+		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+		<meta content="utf-8" http-equiv="encoding">
+		<title>Starlight: Kitchen Sink example</title>
+	</head>
+	<body>
+		<h1>Starlight: Kitchen Sink example</h1>
+		<p id="out"></p>
+
+
+		<!-- 
+			# Lua scripts 
+
+			When Starlight is loaded with `data-run-script-tags` attribute (see below) the 
+			following happens automatically:
+
+			- Script tags with `type="application/x-lua"` are parsed by Starlight.
+			- Parsed scripts that have a `data-modname` attribute are loaded into package.preload
+			- Tags are processed in the order they appear in the page; make sure 
+			  preloaded scripts appear in the document before scripts that require them.
+		-->
+
+		<script type="application/x-lua" data-modname="greet">
+			return function (name) 
+				print("Hello "..name)
+			end 
+		</script>
+
+		<script type="application/x-lua">
+			local g = require 'greet'
+			g 'sailor' 
+			print 'Nice to meet you' 
+
+			local out = window.document:getElementById('out') 
+			out.textContent = 'It works!!'
+
+			window.extract()
+			alert(123)
+		</script>
+
+
+		<!-- 
+			# Starlight
+
+			- Use the `env` property to add values and (JavaScript) methods to the 
+			  Lua global namespace. In this example `inspect()` is added and can be 
+			  invoked to log a value to the browser console.
+			- Note the `data-run-script-tags` attribute on the lower script tag; without 
+			  it, the Lua scripts will not be executed automatically.
+		-->
+
+		<script>
+			window.starlight = {
+				config: {
+					env: {
+						inspect: console.log.bind(console)
+					}
+				}
+			};
+		</script>
+
+		<script src="./starlight.js" data-run-script-tags></script>
+
+	</body>
+</html>

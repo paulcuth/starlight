@@ -39,6 +39,11 @@ export default class Table {
 
 	get(key) {
 		if (!(this instanceof Table)) {
+			if (type(this) == 'userdata') {
+				if (key in this) {
+					return this[key];
+				}
+			}
 			throw new LuaError(`attempt to index a ${type(this)} value`);
 		}
 
@@ -80,6 +85,10 @@ export default class Table {
 
 	set(key, value) {
 		if (!(this instanceof Table)) {
+			if (type(this) == 'userdata') {
+				this[key] = value;
+				return;
+			}
 			throw new LuaError(`attempt to index a ${type(this)} value`);
 		}
 
