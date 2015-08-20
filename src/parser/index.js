@@ -12,14 +12,17 @@ function parseToString (input) {
 	let babel = global.babel;
 
 	if (babel) {
+		js = `()=>{${js}}`;
 		js = babel.transform(js).code;
+		js = js.substr(14, js.length - 15);
+		js = js.replace('(function','return (function') + '.apply(void 0, arguments);';
 	}
 
 	return js;
 }
 
 function parse (input) {
-	return new Function('var global = global || window;' + parseToString(input));
+	return (new Function('var global = this;' + parseToString(input))).bind(global || window);
 }
 
 function runScriptTags() {

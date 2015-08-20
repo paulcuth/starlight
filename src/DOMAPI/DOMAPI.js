@@ -10,6 +10,10 @@
 		mt = new T({
 
 			__index: function (t, key) {
+				if (obj === void 0 || obj === null) {
+					throw new starlight.runtime.LuaError('attempt to index a nil value');
+				}
+
 				var property = obj[key],
 					i, children, child;
 
@@ -81,7 +85,7 @@
 		// Make shine.Functions invokable
 		if (val instanceof Function) {
 			return function () { 
-				return jsToLua(val.apply(undefined, convertArguments(arguments, jsToLua)));
+				return jsToLua(val.apply(void 0, convertArguments(arguments, jsToLua)));
 			};
 		}
 
@@ -138,9 +142,11 @@
 
 	// Add extact method
 	win.set('extract', function () {
-		for (var i in window) {
+		var val, i;
+		for (i in window) {
 			if (i !== 'print' && i !== 'window' && win[i] !== null) {
-				_G.set(i, window[i]);
+				val = _G.get('window').get(i);
+				_G.set(i, typeof val == 'function' ? val.bind(void 0, window) : val);
 			}
 		}
 	});

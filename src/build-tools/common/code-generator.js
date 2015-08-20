@@ -433,7 +433,7 @@ const GENERATORS = {
 
 function extendScope(outerIndex) {
 	let scope = scopeIndex++;
-	let scopeDef = `let $${scope} = $ = $${outerIndex}.extend();`;
+	let scopeDef = `let $${scope} = $${outerIndex}.extend(), $ = $${scope};`;
 	return { scope, scopeDef };
 }
 

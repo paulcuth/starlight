@@ -3,12 +3,12 @@
 	<head>
 		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
 		<meta content="utf-8" http-equiv="encoding">
-		<title>Starlight: Kitchen Sink example</title>
+		<title>Starlight</title>
 	</head>
 	<body>
-		<h1>Starlight: Kitchen Sink example</h1>
-		<p id="out"></p>
-
+		<h1>Starlight</h1>
+		<p id="outlet"></p>
+		<button id="hello">Hello</button>
 
 		<!-- 
 			# Lua scripts 
@@ -22,24 +22,35 @@
 			  preloaded scripts appear in the document before scripts that require them.
 		-->
 
-		<script type="application/x-lua" data-modname="greet">
-			return function (name) 
-				print("Hello "..name)
-			end 
+		<script type="application/x-lua" data-modname="greeting">
+			return {
+				sayHello = function (name)
+					alert("Hello "..name)
+				end 
+			}
 		</script>
 
 		<script type="application/x-lua">
-			local g = require 'greet'
-			g 'sailor' 
-			print 'Nice to meet you' 
+			-- Either interact with the DOM through the `window` namespace
+			local outlet = window.document:getElementById 'outlet'
+			outlet.textContent = 'This page is scripted entirely from Lua code embedded in the page!'
 
-			local out = window.document:getElementById('out') 
-			out.textContent = 'It works!!'
-
+			-- Or extract the contents of `window` into the global namespace
 			window.extract()
-			alert(123)
-		</script>
 
+			-- Load module that was created in the previous script tag
+			local greeting = require 'greeting'
+
+			local button = document:getElementById 'hello'
+			button:addEventListener('click', function ()
+				greeting.sayHello 'sailor' 
+			end)
+
+			-- Run Javascript functions that you inject using Starlight config (see below).
+			-- (print() output can be found in the browser console.)
+			print('Current timestamp: '..getTimestamp())
+
+		</script>
 
 		<!-- 
 			# Starlight
@@ -47,6 +58,7 @@
 			- Use the `env` property to add values and (JavaScript) methods to the 
 			  Lua global namespace. In this example `inspect()` is added and can be 
 			  invoked to log a value to the browser console.
+			- You may remove this script block if you wish to use a default Lua environment.
 			- Note the `data-run-script-tags` attribute on the lower script tag; without 
 			  it, the Lua scripts will not be executed automatically.
 		-->
@@ -55,7 +67,8 @@
 			window.starlight = {
 				config: {
 					env: {
-						inspect: console.log.bind(console)
+						inspect: console.log.bind(console),
+						getTimestamp: Date.now.bind(Date)
 					}
 				}
 			};

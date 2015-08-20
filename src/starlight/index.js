@@ -50,6 +50,7 @@ let runtime = namespace.runtime = {
 	_G,
 	op: operators,
 	T: Table,
+	LuaError,
 	call
 };
 

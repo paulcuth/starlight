@@ -4,15 +4,9 @@ A Lua to ECMAScript 6 transpiler.
 ---
 
 ## Getting started
-
-### Using Grunt
-Install dependencies:
+Install dependencies, then build the Grunt plugin:
 ```
 npm install
-```
-
-Build the Grunt plugin:
-```
 grunt grunt-plugin
 npm link dist/build-tools/grunt-starlight
 ```
@@ -22,36 +16,40 @@ Build runtime, transpile tests, then run:
 grunt
 ```
 
-Tests will also be available in the browser at `dist/test/index.html`.
+Tests will also be available to run in the browser at `dist/test/index.html`.
 
 
+## Kitchen Sink
+The Kitchen Sink edition of Starlight includes:
+	- Starlight runtime, 
+	- Starlight parser, 
+	- DOMAPI 
+	- a build of Babel.js
 
-### Using Gulp
-* There are some async build issues at the moment related to Babel, but the following should build and test all the components of Starlight. *
-Install dependencies:
-```
-npm install
-```
+Together these elements will enable you to execute Lua source code from `<script>` tags in the browser. 
 
-Build the Gulp plugin:
-```
-npm install
-gulp build-gulp-plugin
-```
+Around 85% of the file size of the Kitchen Sink is Babel, hence work is on the roadmap (below) to remove the need for it.
 
-Build runtime and tests, then run tests:
+To build it:
 ```
-gulp build-node-runtime
-gulp build-node-test
-gulp test
+grunt kitchen-sink
 ```
 
+You'll then find the built file and example usage in `dist/kitchen-sink`.
 
-To build the runtime and tests for browser:
-```
-gulp build-node-runtime
-gulp build-browser-runtime
-gulp build-node-test
-gulp build-test
-```
+
+## Roadmap
+The next features to add:
+
+- Performance tests
+- Add plug-ins architecture
+	- Coroutines (as generators are not a 1:1 map)
+	- Lua -> ES5 (remove need for Babel in browser)
+- Customisation of environment and plugins at build-time
+	- Selectively add standard libs.
+- Implement missing standard lib functions
+	- string.format()
+	- string.dump()
+	- load()
+	- loadfile()
 

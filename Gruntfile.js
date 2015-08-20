@@ -160,6 +160,6 @@ module.exports = function(grunt) {
     	require('./dist/test/test.lua.js');
 	})
 
-	grunt.registerTask('default', ['runtime', 'test', 'run-test']);
+	grunt.registerTask('default', ['runtime', 'babel:parser', 'babel:parser-codegen', 'test', 'run-test']);
 
 };

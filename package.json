@@ -1,7 +1,18 @@
 {
   "name": "starlight",
-  "description": "",
-  "version": "0.0.0",
+  "description": "A Lua -> ES6 transpiler",
+  "version": "0.0.1",
+  "author": {
+    "name": "Paul Cuthbertson"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/paulcuth/starlight"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/paulcuth/starlight/issues"
+  },
   "dependencies": {},
   "devDependencies": {
     "babel": "^5.4.7",
