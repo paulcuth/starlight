@@ -72,16 +72,16 @@ assertTrue (b == 'testicles', 'string.byte() should return a string comprising o
 
 -- dump
 
-local f = function () end
-local a = string.dump(f)
-assertTrue (type(a) == 'string', 'string.dump() should return a string when called with a function')
+-- local f = function () end
+-- local a = string.dump(f)
+-- assertTrue (type(a) == 'string', 'string.dump() should return a string when called with a function')
 
-local s = string.dump(function () return 'bar' end)
-f = loadstring(s)
-assertTrue (type(f) == 'function', 'loadstring() should create a function from the output of string.dump() [1]')
+-- local s = string.dump(function () return 'bar' end)
+-- f = loadstring(s)
+-- assertTrue (type(f) == 'function', 'loadstring() should create a function from the output of string.dump() [1]')
 
-result = f()
-assertTrue (result == 'bar', 'The result of loadstring(string.dump(f)) should behave the same as f() [1]')
+-- result = f()
+-- assertTrue (result == 'bar', 'The result of loadstring(string.dump(f)) should behave the same as f() [1]')
 
 -- function namedFuncWithParams (a, b) 
 -- 	return a..b 

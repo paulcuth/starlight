@@ -10,18 +10,16 @@ function parseToString (input) {
 	let ast = parser.parse(input);
 	let js = getRuntimeInit() + generateJS(ast);
 	let babel = global.babel;
-	
-	js = `()=>{ ${js} }`;
+
 	if (babel) {
 		js = babel.transform(js).code;
-		js = js.replace(/^'use strict';\s*/, '').replace(/;$/, '');
 	}
 
 	return js;
 }
 
 function parse (input) {
-	return (new Function(`var global = this; return(${parseToString(input)}).apply(this, arguments);`)).bind(global||window);
+	return new Function('var global = global || window;' + parseToString(input));
 }
 
 function runScriptTags() {

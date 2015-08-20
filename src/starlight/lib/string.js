@@ -93,12 +93,10 @@ export function char(...bytes) {
 }
 
 
-// TODO string.dump(function)
 export function dump(func) {
 	func = coerceArgToFunction(func, 'dump', 1);
-	return Function.prototype.toString.call(func);
+	throw new LuaError('string.dump() is not supported');
 }
-
 
 
 export function find(s, pattern, init = 1, plain = false) {
