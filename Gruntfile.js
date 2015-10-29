@@ -1,14 +1,15 @@
 
 module.exports = function(grunt) {
+	require('grunt-task-loader')(grunt);
 
 	grunt.initConfig({
 		starlight: {
 			test: {
-				src: 'src/test/lua/**/*.lua',
+				src: 'test/lua/**/*.lua',
 				dest: 'dist/test/test.lua.js',
 				options: {
 					main: 'test-runner.lua',
-					basePath: 'src/test/lua'
+					basePath: 'test/lua'
 				}
 			}
 		},
@@ -105,10 +106,21 @@ module.exports = function(grunt) {
 						dest: 'dist/build-tools/grunt-starlight/'
 					}
         			
-    			],
+  			],
+			},
+			'grunt-plugin-module': {
+				files: [
+					{
+						expand: true,
+						src: ['**/*'],
+						cwd: 'dist/build-tools/grunt-starlight/',
+						dest: 'node_modules/grunt-starlight/'
+					}
+        			
+  			],
 			},
 			test: {
-				src: 'src/test/index.html',
+				src: 'test/index.html',
 				dest: 'dist/test/index.html'
 			},
 			'kitchen-sink': {
@@ -137,14 +149,8 @@ module.exports = function(grunt) {
 		}
 	});
 
-	grunt.loadNpmTasks('grunt-starlight');
-	grunt.loadNpmTasks('grunt-contrib-uglify');
-	grunt.loadNpmTasks('grunt-babel');
-	grunt.loadNpmTasks('grunt-contrib-copy');
-	grunt.loadNpmTasks('grunt-contrib-concat');
-	grunt.loadNpmTasks('grunt-browserify');
 
-	grunt.registerTask('grunt-plugin', ['copy:grunt-plugin', 'babel:grunt-plugin-common']);
+	grunt.registerTask('grunt-plugin', ['copy:grunt-plugin', 'babel:grunt-plugin-common', 'copy:grunt-plugin-module']);
 	grunt.registerTask('runtime', ['babel:runtime', 'browserify:runtime', 'uglify:runtime']);
 	grunt.registerTask('test', ['starlight:test', 'babel:test', 'browserify:test', 'uglify:test', 'copy:test']);
 	grunt.registerTask('parser', ['babel:parser', 'babel:parser-codegen', 'browserify:parser', 'uglify:parser', 'uglify:babel']);

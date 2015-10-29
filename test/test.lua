@@ -46,6 +46,8 @@ do
 
 		print "------------------------\n"		
 		print ("Total asserts: "..(passed + failed).."; Passed: "..passed.."; Failed: "..failed..durationStr)
+
+		os.exit(failed)
 	end
 
 end
