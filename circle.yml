@@ -1,0 +1,8 @@
+---
+  machine:
+    node:
+      version: "iojs-v2.3.0"
+    environment:
+  test:
+    override:
+      - npm run test

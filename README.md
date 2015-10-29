@@ -1,9 +1,9 @@
 # Starlight
 
-[![Join the chat at https://gitter.im/paulcuth/starlight](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/paulcuth/starlight?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 A Lua to ECMAScript 6 transpiler.
 
 ---
+[![Circle CI](https://circleci.com/gh/paulcuth/starlight/tree/master.svg?style=svg)](https://circleci.com/gh/paulcuth/starlight/tree/master) [![Join the chat at https://gitter.im/paulcuth/starlight](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/paulcuth/starlight?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ## Getting started
 Install dependencies, then build the Grunt plugin:

@@ -35,5 +35,8 @@
     "through": "^2.3.7",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0"
+  },
+  "scripts": {
+    "test": "grunt grunt-plugin test run-test"
   }
 }
