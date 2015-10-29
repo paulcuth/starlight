@@ -38,6 +38,6 @@
     "vinyl-source-stream": "^1.1.0"
   },
   "scripts": {
-    "test": "grunt grunt-plugin test run-test"
+    "test": "grunt grunt-plugin node-test"
   }
 }

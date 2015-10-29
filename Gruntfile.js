@@ -156,6 +156,9 @@ module.exports = function(grunt) {
 	grunt.registerTask('parser', ['babel:parser', 'babel:parser-codegen', 'browserify:parser', 'uglify:parser', 'uglify:babel']);
 	grunt.registerTask('kitchen-sink', ['babel:runtime', 'browserify:runtime', 'babel:parser', 'babel:parser-codegen', 'browserify:parser', 'concat:kitchen-sink', 'uglify:kitchen-sink', 'copy:kitchen-sink']);
 
+
+	grunt.registerTask('node-test', ['babel:parser', 'babel:parser-codegen', 'babel:runtime', 'starlight:test', 'babel:test', 'run-test']);
+
 	grunt.registerTask('run-test', function () {
 	    global.babel = { 
 	    	transform: require('./node_modules/babel').transform
