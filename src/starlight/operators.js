@@ -114,6 +114,16 @@ function unaryMinus(value) {
 }
 
 
+function and(left, right) {
+	return left && right;
+}
+
+
+function or(left, right) {
+	return coerceToBoolean(left)? left : right;
+}
+
+
 const op = {
 	concat,
 	len,
@@ -143,7 +153,10 @@ const op = {
 	
 	gte(left, right) {
 		return !op.lt(left, right);
-	}
+	},
+
+	and,
+	or
 };
 
 export default op;

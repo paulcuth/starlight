@@ -149,6 +149,8 @@ assertTrue (f or t, 'Or operator should return true even if first operand is fal
 assertTrue (t or f, 'Or operator should return true even if second operand is false')
 assertTrue (not (f or f), 'Or operator should return false if both operands are false')
 
+assertEqual(t and 0 or 1, 0, 'Ternary logic should return the correct result[1]')
+assertEqual(f and 0 or 1, 1, 'Ternary logic should return the correct result[2]')
 
 
 local tests = {
