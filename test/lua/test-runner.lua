@@ -103,7 +103,6 @@ do
 end
 
 
-assertTrue(false, 'fail')
 
 run 'operators'
 run 'functions'
