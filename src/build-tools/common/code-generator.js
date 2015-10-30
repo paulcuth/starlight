@@ -31,8 +31,8 @@ const BIN_OP_MAP = {
 };
 
 const LOGICAL_OP_MAP = {
-	'and': '&&',
-	'or': '||'
+	'and': 'and',
+	'or': 'or'
 };
 
 
@@ -300,7 +300,7 @@ const GENERATORS = {
 			throw new Error(`Unhandled logical operator: ${node.operator}`);
 		}
 
-		return `(${left} ${operator} ${right})`;
+		return `__star_op_${operator}(${left}, ${right})`;
 	},
 
 
@@ -464,7 +464,8 @@ function generate(ast, scope) {
 export function getRuntimeInit() {
 	let init = 'let __star = global.starlight.runtime, $0 = __star.globalScope, $ = $0, __star_tmp;\n';
 	init += 'let __star_call = __star.call, __star_T = __star.T, __star_op_bool = __star.op.bool;';
-	init += 'let __star_op_unm = __star.op.unm, __star_op_not = __star.op.not, __star_op_len = __star.op.len, __star_op_concat = __star.op.concat, __star_op_add = __star.op.add, __star_op_sub = __star.op.sub, __star_op_mul = __star.op.mul, __star_op_div = __star.op.div, __star_op_mod = __star.op.mod, __star_op_eq = __star.op.eq, __star_op_neq = __star.op.neq, __star_op_lt = __star.op.lt, __star_op_gt = __star.op.gt, __star_op_lte = __star.op.lte, __star_op_gte = __star.op.gte, __star_op_pow = __star.op.pow;\n';
+	init += 'let __star_op_unm = __star.op.unm, __star_op_not = __star.op.not, __star_op_len = __star.op.len, __star_op_concat = __star.op.concat, __star_op_add = __star.op.add, __star_op_sub = __star.op.sub, __star_op_mul = __star.op.mul, __star_op_div = __star.op.div, __star_op_mod = __star.op.mod, __star_op_eq = __star.op.eq, __star_op_neq = __star.op.neq, __star_op_lt = __star.op.lt, __star_op_gt = __star.op.gt, __star_op_lte = __star.op.lte, __star_op_gte = __star.op.gte, __star_op_pow = __star.op.pow;';
+	init += 'let __star_op_and = __star.op.and, __star_op_or = __star.op.or;\n';
 	
 	init += 'let Tget, Tset, Tins, $get, $set, $setLocal, __star_shift;';
 

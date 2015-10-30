@@ -96,10 +96,11 @@ do
 
 		print "------------------------\n"		
 		print ("Total asserts: "..(passed + failed).."; Passed: "..passed.."; Failed: "..failed..durationStr)
+
+		os.exit(failed == 0 and 0 or 1)
 	end
 
 end
-
 
 
 

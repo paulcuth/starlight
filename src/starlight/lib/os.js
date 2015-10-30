@@ -99,7 +99,17 @@ export function date(format = '%c', time) {
 }
 
 
+export function exit(code = 0) {
+	var process = global.process;
+	if (process && process.exit) {
+		process.exit(code);
+	} else {
+		throw new Error(`Exit with code: ${code}`);
+	}
+}
+
 
 export default new T({
-	date
+	date,
+	exit
 });
