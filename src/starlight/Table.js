@@ -129,6 +129,10 @@ export default class Table {
 
 
 	rawset(key, value) {
+		if (value instanceof Array) {
+			value = value[0];
+		}
+
 		switch (typeof key) {
 			case 'string':
 				this.strValues[key] = value;

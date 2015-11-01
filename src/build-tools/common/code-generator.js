@@ -30,11 +30,6 @@ const BIN_OP_MAP = {
 	'^': 'pow'
 };
 
-const LOGICAL_OP_MAP = {
-	'and': 'and',
-	'or': 'or'
-};
-
 
 const GENERATORS = {
 
@@ -162,7 +157,7 @@ const GENERATORS = {
 		let start = scoped(node.start, outerScope);
 		let end = scoped(node.end, outerScope);
 		let step = node.step === null ? 1 : generate(node.step, outerScope);
-		let operator = start < end ? '<=' : '>=';
+		let operator = step > 0 ? '<=' : '>=';
 		let body = this.Chunk(node, scope);
 		let loopIndex = ++forLoopIndex;
 
@@ -293,14 +288,18 @@ const GENERATORS = {
 	LogicalExpression(node, scope) {
 		let left = scoped(node.left, scope);
 		let right = scoped(node.right, scope);
-		let operator = LOGICAL_OP_MAP[node.operator];
+		let operator = node.operator;
 
-		if (!operator) {
+		if (operator === 'and') {
+			return `(!__star.op.bool(${left})?${left}:${right})`
+
+		} else if (operator === 'or') {
+			return `(__star.op.bool(${left})?${left}:${right})`
+
+		} else {
 			console.info(node);
 			throw new Error(`Unhandled logical operator: ${node.operator}`);
 		}
-
-		return `__star_op_${operator}(${left}, ${right})`;
 	},
 
 
