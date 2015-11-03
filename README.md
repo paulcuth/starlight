@@ -2,11 +2,13 @@
 
 A Lua to ECMAScript 6 transpiler.
 
----
-[![Circle CI](https://circleci.com/gh/paulcuth/starlight/tree/master.svg?style=svg)](https://circleci.com/gh/paulcuth/starlight/tree/master) [![Join the chat at https://gitter.im/paulcuth/starlight](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/paulcuth/starlight?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Circle CI](https://img.shields.io/circleci/project/paulcuth/starlight/master.svg?label=master)](https://circleci.com/gh/paulcuth/starlight/tree/master) [![Circle CI](https://img.shields.io/circleci/project/paulcuth/starlight/dev.svg?label=dev)](https://circleci.com/gh/paulcuth/starlight/tree/dev) ![Tagged version number](https://img.shields.io/github/tag/paulcuth/starlight.svg?color=brightgreen)
+
+
 
 ## Getting started
 Install dependencies, then build the Grunt plugin:
+[![NPM version number](https://img.shields.io/npm/v/grunt-starlight.svg?label=grunt)](https://www.npmjs.com/package/grunt-starlight)
 ```
 npm install
 grunt grunt-plugin
@@ -38,6 +40,10 @@ grunt kitchen-sink
 ```
 
 You'll then find the built file and example usage in `dist/kitchen-sink`.
+
+## Get involved
+[![Join the chat at https://gitter.im/paulcuth/starlight](https://img.shields.io/badge/gitter-join%20chat-green.svg)](https://gitter.im/paulcuth/starlighte)
+
 
 
 ## Roadmap

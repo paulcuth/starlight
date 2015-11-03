@@ -6,3 +6,13 @@
   test:
     override:
       - npm run test
+  deployment:
+    npm:
+      branch: master
+      commands:
+        - node ci/bump-project-version
+        - grunt grunt-plugin
+        - node ci/sync-plugin-version
+        - echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/.npmrc
+        - npm publish dist/build-tools/grunt-starlight
+        - node ci/tag
