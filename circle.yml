@@ -6,3 +6,12 @@
   test:
     override:
       - npm run test
+  deployment:
+    npm:
+      branch: dev
+      commands:
+        - node ci/bump-project-version
+        - grunt build-plugin
+        - node ci/sync-plugin-version
+        - npm publish dist/build-tools/grunt-starlight
+        - node ci/tag
