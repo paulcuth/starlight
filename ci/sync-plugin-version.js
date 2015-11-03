@@ -4,7 +4,7 @@ const PLUGIN_PACKAGE_FILENAME = '../dist/build-tools/grunt-starlight/package.jso
 // Sync versions
 const project = require(PROJECT_PACKAGE_FILENAME);
 const plugin = require(PLUGIN_PACKAGE_FILENAME);
-
+console.log(project);
 plugin.version = project.version;
 
 const output = JSON.stringify(plugin, null, '\t');

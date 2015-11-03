@@ -15,4 +15,5 @@ require('fs').writeFile(PACKAGE_FILENAME, output, function (err) {
   }
 
   console.log('Bumped version: ' + oldVersion + ' -> ' + package.version);
+  console.log(output);
 });
