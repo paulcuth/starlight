@@ -1,22 +1,17 @@
-const fs = require('fs');
-
 const PROJECT_PACKAGE_FILENAME = '../package.json';
 const PLUGIN_PACKAGE_FILENAME = '../dist/build-tools/grunt-starlight/package.json';
 
 // Sync versions
-fs.readFile(__dirname + '/' + PROJECT_PACKAGE_FILENAME, function (err, project) {
-  console.log(''+project);
-  project = JSON.parse(project);
+const project = require(PROJECT_PACKAGE_FILENAME);
+const plugin = require(PLUGIN_PACKAGE_FILENAME);
 
-  const plugin = require(PLUGIN_PACKAGE_FILENAME);
-  plugin.version = project.version;
+plugin.version = project.version;
 
-  const output = JSON.stringify(plugin, null, '\t');
-  fs.writeFile(__dirname + '/' + PLUGIN_PACKAGE_FILENAME, output, function (err) {
-    if (err) {
-      throw(err);
-    }
+const output = JSON.stringify(plugin, null, '\t');
+require('fs').writeFile(__dirname + '/' + PLUGIN_PACKAGE_FILENAME, output, function (err) {
+  if (err) {
+    throw(err);
+  }
 
-    console.log('Bumped to version: ' + plugin.version);
-  });
+  console.log('Bumped to version: ' + plugin.version);
 });
