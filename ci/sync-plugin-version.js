@@ -8,5 +8,9 @@ const plugin = require(PLUGIN_PACKAGE_FILENAME);
 plugin.version = project.version;
 
 const output = JSON.stringify(plugin, null, '\t');
-require('fs').writeFile(PLUGIN_PACKAGE_FILENAME, output, function(){});
+require('fs').writeFile(__dirname + '/' + PLUGIN_PACKAGE_FILENAME, output, function (err) {
+  if (err) {
+    throw(err);
+  }
+});
 

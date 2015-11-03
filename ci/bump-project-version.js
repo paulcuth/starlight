@@ -8,4 +8,7 @@ version[2] = 0;
 package.version = version.join('.');
 
 const output = JSON.stringify(package, null, '\t');
-require('fs').writeFile(PACKAGE_FILENAME, output);
+require('fs').writeFile(PACKAGE_FILENAME, output, function (err) {
+  if (err) {
+    throw(err);
+  });
