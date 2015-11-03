@@ -11,7 +11,7 @@
       branch: dev
       commands:
         - node ci/bump-project-version
-        - grunt build-plugin
+        - grunt grunt-plugin
         - node ci/sync-plugin-version
         - echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/.npmrc
         - npm publish dist/build-tools/grunt-starlight

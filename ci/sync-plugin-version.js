@@ -12,5 +12,6 @@ require('fs').writeFile(__dirname + '/' + PLUGIN_PACKAGE_FILENAME, output, funct
   if (err) {
     throw(err);
   }
-});
 
+  console.log('Bumped to version: ' + plugin.version);
+});
