@@ -11,4 +11,5 @@ const output = JSON.stringify(package, null, '\t');
 require('fs').writeFile(PACKAGE_FILENAME, output, function (err) {
   if (err) {
     throw(err);
-  });
+  }
+});
