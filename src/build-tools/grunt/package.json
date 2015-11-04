@@ -15,11 +15,7 @@
   "bugs": {
     "url": "https://github.com/paulcuth/starlight/issues"
   },
-  "licenses": [
-    {
-      "type": "MIT"
-    }
-  ],
+  "license": "MIT",
   "engines": {
     "node": ">= 0.8.0"
   },
