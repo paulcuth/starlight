@@ -1,3 +1,5 @@
+const childProcess = require('child_process');
+
 const PACKAGE_FILENAME = '../package.json';
 
 const package = require(PACKAGE_FILENAME);
