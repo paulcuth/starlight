@@ -7,7 +7,7 @@ A Lua to ECMAScript 6 transpiler.
 
 
 ## Getting started
-Install dependencies, then build the Grunt plugin:
+Install dependencies, then build the Grunt plugin:  
 [![NPM version number](https://img.shields.io/npm/v/grunt-starlight.svg?label=grunt)](https://www.npmjs.com/package/grunt-starlight)
 ```
 npm install

@@ -10,6 +10,7 @@
     npm:
       branch: master
       commands:
+        - git config user.name "CircleCI"
         - node ci/bump-project-version
         - grunt grunt-plugin
         - node ci/sync-plugin-version
