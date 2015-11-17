@@ -24,6 +24,7 @@ This will create `dist/bowser-lib/starlight.js` along with example usage in the 
 
 ### Use with Grunt
 [![NPM version number](https://img.shields.io/npm/v/grunt-starlight.svg?label=grunt)](https://www.npmjs.com/package/grunt-starlight)
+
 To use Starlight to transpile Lua to ES6 as part of your build pipeline, build the plugin:
 ```
 grunt grunt-plugin

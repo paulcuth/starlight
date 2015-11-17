@@ -14,6 +14,6 @@
         - node ci/bump-project-version
         - grunt grunt-plugin
         - node ci/sync-plugin-version
+        - node ci/tag
         - echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/.npmrc
         - npm publish dist/build-tools/grunt-starlight
-        - node ci/tag
