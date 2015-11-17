@@ -14,14 +14,13 @@ module.exports = function(grunt) {
 			}
 		},
 		concat: {
-			'kitchen-sink': {
+			'browser-lib': {
 				src: [
-					'dist/browser/starlight.js',
+					'dist/browser/runtime.js',
 					'src/DOMAPI/DOMAPI.js',
-					'node_modules/babel/node_modules/babel-core/browser.min.js',
 					'dist/browser/parser.js'
 				],
-				dest: 'dist/kitchen-sink/starlight.js'
+				dest: 'dist/browser-lib/starlight.js'
 			}
 		},
 		uglify: {
@@ -30,8 +29,8 @@ module.exports = function(grunt) {
 				dest: 'dist/test/test.lua.js'
 			},
 			runtime: {
-				src: 'dist/browser/starlight.js',
-				dest: 'dist/browser/starlight.js'
+				src: 'dist/browser/runtime.js',
+				dest: 'dist/browser/runtime.js'
 			},
 			parser: {
 				src: 'dist/browser/parser.js',
@@ -41,9 +40,9 @@ module.exports = function(grunt) {
 				src: 'node_modules/babel/node_modules/babel-core/browser.min.js',
 				dest: 'dist/browser/babel.js'
 			},
-			'kitchen-sink': {
-				src: 'dist/kitchen-sink/starlight.js',
-				dest: 'dist/kitchen-sink/starlight.js'
+			'browser-lib': {
+				src: 'dist/browser-lib/starlight.js',
+				dest: 'dist/browser-lib/starlight.js'
 			}
 		},
 		babel: {
@@ -63,7 +62,7 @@ module.exports = function(grunt) {
 					{
 						expand: true,
 						src: ['**/*.js'],
-						cwd: 'src/starlight/',
+						cwd: 'src/runtime/',
 						dest: 'dist/node/',
 						ext: '.js'
 					}
@@ -123,17 +122,17 @@ module.exports = function(grunt) {
 				src: 'test/index.html',
 				dest: 'dist/test/index.html'
 			},
-			'kitchen-sink': {
+			'browser-lib': {
 				files: {
-					'dist/kitchen-sink/index.html': 'src/kitchen-sink/example.html',
-					'dist/kitchen-sink/README.md': 'src/kitchen-sink/README.md'
+					'dist/browser-lib/index.html': 'src/browser-lib/index.html',
+					'dist/browser-lib/README.md': 'src/browser-lib/README.md'
 				}
 			}
 		},
 		browserify: {
 			runtime: {
 				files: {
-					'dist/browser/starlight.js': ['dist/node/index.js'],
+					'dist/browser/runtime.js': ['dist/node/index.js'],
 				}
 			},
 			test: {
@@ -154,7 +153,7 @@ module.exports = function(grunt) {
 	grunt.registerTask('runtime', ['babel:runtime', 'browserify:runtime', 'uglify:runtime']);
 	grunt.registerTask('test', ['starlight:test', 'babel:test', 'browserify:test', 'uglify:test', 'copy:test']);
 	grunt.registerTask('parser', ['babel:parser', 'babel:parser-codegen', 'browserify:parser', 'uglify:parser', 'uglify:babel']);
-	grunt.registerTask('kitchen-sink', ['babel:runtime', 'browserify:runtime', 'babel:parser', 'babel:parser-codegen', 'browserify:parser', 'concat:kitchen-sink', 'uglify:kitchen-sink', 'copy:kitchen-sink']);
+	grunt.registerTask('browser-lib', ['babel:runtime', 'browserify:runtime', 'babel:parser', 'babel:parser-codegen', 'browserify:parser', 'concat:browser-lib', 'uglify:browser-lib', 'copy:browser-lib']);
 
 
 	grunt.registerTask('node-test', ['babel:parser', 'babel:parser-codegen', 'babel:runtime', 'starlight:test', 'babel:test', 'run-test']);
@@ -163,7 +162,10 @@ module.exports = function(grunt) {
 	    global.babel = { 
 	    	transform: require('./node_modules/babel').transform
 	    };
-	    global.starlight = { config: { env: { getTimestamp: Date.now.bind(Date) } } };
+	    global.starlight = { config: { env: { 
+	    	getTimestamp: Date.now.bind(Date),
+	    	inspect: console.log.bind(console)
+	    } } };
 	    require('./dist/node/parser/index.js');
 	    require('./dist/node/index.js');
     	require('./dist/test/test.lua.js');

@@ -7,12 +7,26 @@ A Lua to ECMAScript 6 transpiler.
 
 
 ## Getting started
-Install dependencies, then build the Grunt plugin:  
-[![NPM version number](https://img.shields.io/npm/v/grunt-starlight.svg?label=grunt)](https://www.npmjs.com/package/grunt-starlight)
+Checkout the repo and install dependencies:
 ```
+git clone git@github.com:paulcuth/starlight.git
+cd starlight
 npm install
+```
+
+### Use in the browser
+To use Starlight to parse Lua script tags in the brower, build the browser-lib:
+```
+grunt browser-lib
+```
+This will create `dist/bowser-lib/starlight.js` along with example usage in the same folder.
+
+
+### Use with Grunt
+[![NPM version number](https://img.shields.io/npm/v/grunt-starlight.svg?label=grunt)](https://www.npmjs.com/package/grunt-starlight)
+To use Starlight to transpile Lua to ES6 as part of your build pipeline, build the plugin:
+```
 grunt grunt-plugin
-npm link dist/build-tools/grunt-starlight
 ```
 
 Build runtime, transpile tests, then run:
@@ -22,25 +36,6 @@ grunt
 
 Tests will also be available to run in the browser at `dist/test/index.html`.
 
-
-## Kitchen Sink
-The Kitchen Sink edition of Starlight includes:
-	- Starlight runtime, 
-	- Starlight parser, 
-	- DOMAPI 
-	- a build of Babel.js
-
-Together these elements will enable you to execute Lua source code from `<script>` tags in the browser. 
-
-Around 85% of the file size of the Kitchen Sink is Babel, hence work is on the roadmap (below) to remove the need for it.
-
-To build it:
-```
-grunt kitchen-sink
-```
-
-You'll then find the built file and example usage in `dist/kitchen-sink`.
-
 ## Get involved
 [![Join the chat at https://gitter.im/paulcuth/starlight](https://img.shields.io/badge/gitter-join%20chat-green.svg)](https://gitter.im/paulcuth/starlighte)
 
@@ -49,13 +44,12 @@ You'll then find the built file and example usage in `dist/kitchen-sink`.
 ## Roadmap
 The next features to add:
 
-- Performance tests
-- Add plug-ins architecture
+- [ ] Performance tests
+- [ ]Add plug-ins architecture
 	- Coroutines (as generators are not a 1:1 map)
-	- Lua -> ES5 (remove need for Babel in browser)
-- Customisation of environment and plugins at build-time
+- [ ] Customisation of environment and plugins at build-time
 	- Selectively add standard libs.
-- Implement missing standard lib functions
+- [ ] Implement missing standard lib functions
 	- string.format()
 	- string.dump()
 	- load()
