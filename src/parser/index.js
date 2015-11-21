@@ -15,7 +15,7 @@ function parseToString (input) {
 		js = `()=>{${js}}`;
 		js = babel.transform(js).code;
 		js = js.substr(14, js.length - 15);
-		js = js.replace('(function','return (function') + '.apply(void 0, arguments);';
+		js = js.replace('\n(function','\nreturn (function') + '.apply(void 0, arguments);';
 	}
 
 	return js;

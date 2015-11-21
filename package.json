@@ -2,9 +2,6 @@
 	"name": "starlight",
 	"description": "A Lua -> ES6 transpiler",
 	"version": "0.0.3",
-	"ci": {
-		"bump": "minor"
-	},
 	"author": {
 		"name": "Paul Cuthbertson"
 	},
