@@ -178,8 +178,6 @@ until i == 4
 assertTrue (b == '1', 'Break should exit repeat loop')
 
 
-
-
 a = ':'
 t = { 123, 456, x = 789, 10 }
 for i, v in ipairs(t) do
@@ -191,3 +189,26 @@ assertTrue (string.find(a, ':2=456:') ~= nil, 'for-in-ipairs loop should iterate
 assertTrue (string.find(a, ':3=10:') ~= nil, 'for-in-ipairs loop should iterate over numeric keys [3]')
 assertTrue (string.find(a, ':x=789:') == nil, 'for-in-ipairs loop should not iterate over non-numeric keys')
 assertEqual (a, ':1=123:2=456:3=10:', 'for-in-ipairs loop should iterate over numeric keys in order')
+
+
+b = nil
+a = function () 
+	return false, true
+end
+
+if a() then
+	b = 'THIS SHOULD NOT EXECUTE'
+end
+assertEqual (b, nil, 'If clause with function call should only use first returned value. [1]')
+
+b = nil
+a = function () 
+	return true, false
+end
+
+if a() then
+	b = 'THIS SHOULD EXECUTE'
+end
+assertEqual (b, 'THIS SHOULD EXECUTE', 'If clause with function call should only use first returned value. [2]')
+
+

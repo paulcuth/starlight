@@ -234,6 +234,11 @@ const GENERATORS = {
 
 	IfClause(node, scope) {
 		let condition = scoped(node.condition, scope);
+
+		if (isCallExpression(node.condition)) {
+			condition += '[0]';
+		}
+
 		let body = this.Chunk(node, scope);
 		return `if (__star_op_bool(${condition})) {\n${body}\n}`;
 	},
