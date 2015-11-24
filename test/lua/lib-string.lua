@@ -545,6 +545,16 @@ assertTrue (c == 'mclaren mercedes', 'string.lower() should return the string in
 
 
 
+
+-- match
+
+local a = string.match('26/10/1980', "^%d+%p%d+%p%d%d%d%d$")
+assertEqual (a, '26/10/1980', 'string.match() should handle punctuation.')
+
+
+
+
+
 -- rep
 
 local a = 'Ho'
