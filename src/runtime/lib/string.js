@@ -24,8 +24,8 @@ const ROSETTA_STONE = {
 	'%D': '[^\d]',
 	'%l': '[a-z]',
 	'%L': '[^a-z]',
-	'%p': '[\.\,\"\'\?\!\;\:\#\$\%\&\(\)\*\+\-\/\<\>\=\@\[\\]\\\\^\_\{\}\|\~]',
-	'%P': '[^\.\,\"\'\?\!\;\:\#\$\%\&\(\)\*\+\-\/\<\>\=\@\[\\]\\\\^\_\{\}\|\~]',
+	'%p': '[\.\,\"\'\?\!\;\:\#\$\%\&\(\)\*\+\-\/\<\>\=\@\\[\\]\\\\^\_\{\}\|\~]',
+	'%P': '[^\.\,\"\'\?\!\;\:\#\$\%\&\(\)\*\+\-\/\<\>\=\@\\[\\]\\\\^\_\{\}\|\~]',
 	'%s': '[ \\t\\n\\f\\v\\r]',
 	'%S': '[^ \t\n\f\v\r]',
 	'%u': '[A-Z]',
@@ -42,16 +42,38 @@ function translatePattern (pattern) {
 	// TODO Add support for balanced character matching (not sure this is easily achieveable).
 	pattern = '' + pattern;
 
-	var n = 0,
-		i, l, character, addSlash;
-				
-	for (i in ROSETTA_STONE) {
+	for (let i in ROSETTA_STONE) {
 		if (ROSETTA_STONE.hasOwnProperty(i)) {
 			pattern = pattern.replace(new RegExp(i, 'g'), ROSETTA_STONE[i]);
 		}
 	}
 
-	l = pattern.length;
+ 	let l = pattern.length;
+	let n = 0;
+
+	for (let i = 0; i < l; i++) {
+		const character = pattern.substr(i, 1);
+		if (i && pattern.substr(i - 1, 1) == '\\') {
+			continue;
+		}
+
+		let addSlash = false;
+
+		if (character == '[') {
+			if (n) addSlash = true;
+			n++;
+
+		} else if (character == ']' && pattern.substr(i - 1, 1) !== '\\') {
+			n--;
+			if (n) addSlash = true;
+		}
+
+		if (addSlash) {
+			pattern = pattern.substr(0, i) + pattern.substr(i++ + 1);
+			l++;
+		}
+	}		
+
 	return pattern;	
 }
 

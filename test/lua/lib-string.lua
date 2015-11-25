@@ -548,9 +548,14 @@ assertTrue (c == 'mclaren mercedes', 'string.lower() should return the string in
 
 -- match
 
-local a = string.match('26/10/1980', "^%d+%p%d+%p%d%d%d%d$")
-assertEqual (a, '26/10/1980', 'string.match() should handle punctuation.')
+local a = string.match('20/11/1988', "^%d+%p%d+%p%d%d%d%d$")
+assertEqual (a, '20/11/1988', 'string.match() should handle punctuation.')
 
+local a = ('foo@bar.com'):match("^[%w+%.%-_]+@[%w+%.%-_]+%.%a%a+$")
+assertEqual (a, 'foo@bar.com', 'string.match() should flatten nested groups.')
+
+local a = ('-=[]\';'):match("%W")
+assertEqual (a, '-', 'string.match() match non-word chars.')
 
 
 
@@ -628,5 +633,6 @@ assertEqual (strMeta.__index, string, 'String lib should be metamethod of string
 
 a = ('Hey'):lower()
 assertEqual (a, 'hey', 'String lib should be metamethod of string instances.')
+
 
 
