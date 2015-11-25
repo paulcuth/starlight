@@ -3,6 +3,11 @@ import { type } from './lib/globals';
 
 
 let count = 0;
+let stringLib;
+
+export function registerStringLib(lib) {
+	stringLib = lib; // Can't import it directly because that'll create a circular dependency. :(
+};
 
 
 export default class Table {
@@ -33,13 +38,15 @@ export default class Table {
 				}
 			}
 		}
-
 	}
 
 
 	get(key) {
 		if (!(this instanceof Table)) {
-			if (type(this) == 'userdata') {
+			if (type(this) == 'string') {
+				return stringLib.get(key);
+
+			} else if (type(this) == 'userdata') {
 				if (key in this) {
 					return this[key];
 				}

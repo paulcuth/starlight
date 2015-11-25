@@ -1,6 +1,6 @@
 import { default as T } from '../Table';
 import { default as LuaError } from '../LuaError';
-import { default as stringLib } from './string';
+import { default as stringLib, metatable as stringMetatable } from './string';
 import { getn } from './table';
 
 import { 
@@ -14,7 +14,6 @@ import {
 } from '../utils';
 
 
-const stringMetatable = new T({ __index: stringLib });
 const CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 

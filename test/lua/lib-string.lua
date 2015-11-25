@@ -620,3 +620,13 @@ assertTrue (a == '', 'string.upper() should return an empty string if passed an 
 assertTrue (b == 'JAVASCRIPT', 'string.upper() should return the first argument in uppercase')
 
 
+
+
+-- `string` lib as metatable of strings.
+local strMeta = getmetatable('')
+assertEqual (strMeta.__index, string, 'String lib should be metamethod of string instances.')
+
+a = ('Hey'):lower()
+assertEqual (a, 'hey', 'String lib should be metamethod of string instances.')
+
+

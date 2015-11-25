@@ -1,7 +1,7 @@
 import { default as Scope } from './Scope';
 import { default as globals, type } from './lib/globals';
 import { default as operators } from './operators';
-import { default as Table } from './Table';
+import { default as Table, registerStringLib } from './Table';
 import { default as LuaError } from './LuaError';
 
 
@@ -67,6 +67,7 @@ _G.set('table', table);
 
 import { default as string } from './lib/string';
 _G.set('string', string);
+registerStringLib(string);
 
 import { default as os } from './lib/os';
 _G.set('os', os);

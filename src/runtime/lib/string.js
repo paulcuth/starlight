@@ -263,7 +263,7 @@ export function upper(s) {
 
 
 
-export default new T({
+const string = new T({
 	byte, 
 	char,
 	dump,
@@ -278,3 +278,6 @@ export default new T({
 	sub,
 	upper
 });
+
+export default string;
+export const metatable = new T({ __index: string });
