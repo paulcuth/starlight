@@ -548,9 +548,14 @@ assertTrue (c == 'mclaren mercedes', 'string.lower() should return the string in
 
 -- match
 
-local a = string.match('26/10/1980', "^%d+%p%d+%p%d%d%d%d$")
-assertEqual (a, '26/10/1980', 'string.match() should handle punctuation.')
+local a = string.match('20/11/1988', "^%d+%p%d+%p%d%d%d%d$")
+assertEqual (a, '20/11/1988', 'string.match() should handle punctuation.')
 
+local a = ('foo@bar.com'):match("^[%w+%.%-_]+@[%w+%.%-_]+%.%a%a+$")
+assertEqual (a, 'foo@bar.com', 'string.match() should flatten nested groups.')
+
+local a = ('-=[]\';'):match("%W")
+assertEqual (a, '-', 'string.match() match non-word chars.')
 
 
 
@@ -618,5 +623,16 @@ local b = string.upper ('JavaScript');
 
 assertTrue (a == '', 'string.upper() should return an empty string if passed an empty string')
 assertTrue (b == 'JAVASCRIPT', 'string.upper() should return the first argument in uppercase')
+
+
+
+
+-- `string` lib as metatable of strings.
+local strMeta = getmetatable('')
+assertEqual (strMeta.__index, string, 'String lib should be metamethod of string instances.')
+
+a = ('Hey'):lower()
+assertEqual (a, 'hey', 'String lib should be metamethod of string instances.')
+
 
 
