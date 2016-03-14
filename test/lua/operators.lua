@@ -153,6 +153,14 @@ assertEqual(t and 0 or 1, 0, 'Ternary logic should return the correct result[1]'
 assertEqual(f and 0 or 1, 1, 'Ternary logic should return the correct result[2]')
 
 
+local function test()
+    return true
+end
+
+assertTrue(test() and true, 'Should allow function calls as first operand in boolean operations')
+assertTrue(true and test(), 'Should allow function calls as second operand in boolean operations')
+
+
 local tests = {
 	addition = function (a, b) return a + b end,
 	subtraction = function (a, b) return a - b end,
