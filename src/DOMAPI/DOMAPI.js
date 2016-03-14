@@ -14,6 +14,10 @@
 					throw new starlight.runtime.LuaError('attempt to index a nil value');
 				}
 
+				if (typeof(key) == 'number') {
+					key--;
+				}
+
 				var property = obj[key],
 					i, children, child;
 
@@ -63,6 +67,10 @@
 
 
 			__newindex: function (t, key, val) {
+				if (typeof(key) == 'number') {
+					key++;
+				}
+
 				obj[key] = luaToJS(val);
 			}
 

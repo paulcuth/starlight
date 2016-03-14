@@ -552,10 +552,13 @@ local a = string.match('20/11/1988', "^%d+%p%d+%p%d%d%d%d$")
 assertEqual (a, '20/11/1988', 'string.match() should handle punctuation.')
 
 local a = ('foo@bar.com'):match("^[%w+%.%-_]+@[%w+%.%-_]+%.%a%a+$")
-assertEqual (a, 'foo@bar.com', 'string.match() should flatten nested groups.')
+
+local a = ('test-123_test.2@a-b_c.movie'):match("^[%w+%.%-_]+@[%w+%.%-_]+%.%a%a+$")
+assertEqual (a, 'test-123_test.2@a-b_c.movie', 'string.match() should flatten nested groups.')
 
 local a = ('-=[]\';'):match("%W")
 assertEqual (a, '-', 'string.match() match non-word chars.')
+
 
 
 
