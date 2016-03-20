@@ -295,6 +295,14 @@ const GENERATORS = {
 		let right = scoped(node.right, scope);
 		let operator = node.operator;
 
+		if (isCallExpression(node.left)) {
+			left += '[0]';
+		}
+
+		if (isCallExpression(node.right)) {
+			right += '[0]';
+		}
+
 		if (operator === 'and') {
 			return `(!__star.op.bool(${left})?${left}:${right})`
 
