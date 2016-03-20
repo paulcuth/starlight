@@ -401,7 +401,7 @@ const GENERATORS = {
 
 
 	TableKey(node, scope) {
-		let name = generate(node.key, scope);
+		let name = scoped(node.key, scope);
 		let value = scoped(node.value, scope);
 		return `Tset(t, ${name}, ${value})`;
 	},
@@ -478,7 +478,8 @@ function generate(ast, scope) {
 
 
 export function getRuntimeInit() {
-	let init = 'let __star = global.starlight.runtime, $0 = __star.globalScope, $ = $0, __star_tmp;\n';
+	let init = '"use strict";\n';
+	init += 'let __star = global.starlight.runtime, $0 = __star.globalScope, $ = $0, __star_tmp;\n';
 	init += 'let __star_call = __star.call, __star_T = __star.T, __star_op_bool = __star.op.bool;';
 	init += 'let __star_op_unm = __star.op.unm, __star_op_not = __star.op.not, __star_op_len = __star.op.len, __star_op_concat = __star.op.concat, __star_op_add = __star.op.add, __star_op_sub = __star.op.sub, __star_op_mul = __star.op.mul, __star_op_div = __star.op.div, __star_op_mod = __star.op.mod, __star_op_eq = __star.op.eq, __star_op_neq = __star.op.neq, __star_op_lt = __star.op.lt, __star_op_gt = __star.op.gt, __star_op_lte = __star.op.lte, __star_op_gte = __star.op.gte, __star_op_pow = __star.op.pow;';
 	init += 'let __star_op_and = __star.op.and, __star_op_or = __star.op.or;\n';
