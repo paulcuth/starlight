@@ -363,8 +363,12 @@ const GENERATORS = {
 
 
 	StringLiteral(node) {
-		let escaped = node.value.replace(/["']/g, '\\$&').replace(/\n/g, '\\n');
-		return `'${escaped}'`;
+		const raw = node.raw.replace(/\\(\d+)/g, (_, oct) => `\\x0${parseInt(oct, 8).toString(16)}`);
+		if (/^\[\[[^]*]$/m.test(raw)) {
+			return `\`${raw.substr(2, raw.length - 4)}\``;
+		} else {
+			return raw;
+		}
 	},
 
 
