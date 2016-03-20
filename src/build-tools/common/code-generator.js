@@ -206,7 +206,7 @@ const GENERATORS = {
 			name = identifier.property.replace(/'/g, '');
 
 			if (node.identifier.indexer === ':') {
-				params.unshift("$set($, 'self', __star_shift(args))");
+				params.unshift("$setLocal($, 'self', __star_shift(args))");
 			}
 		} else {
 			name = identifier;
