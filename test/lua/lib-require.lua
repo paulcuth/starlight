@@ -36,7 +36,10 @@ assertTrue (testModName == 'lib-require', 'A module\'s name should be passed int
 
 
 local sub = require 'lib-require.sub-module'	-- test dot syntax
-assertTrue(type(sub) == 'table', 'Module should be able to load more modules.')
+assertTrue(type(sub) == 'table', 'Module should be able to load more modules using dot syntax.')
+
+local sub2 = require 'lib-require/sub-module'  -- test slash syntax
+assertTrue(type(sub2) == 'table', 'Module should be able to load more modules using slash syntax.')
 
 mainGlobal1 = 'innerGlbl'
 local innerLocal = 'innerLoc'

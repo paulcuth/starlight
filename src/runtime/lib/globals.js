@@ -236,9 +236,11 @@ export function rawset(table, index, value) {
 
 export function _require(modname) {
 	modname = coerceArgToString(modname, 'require', 1);
+	modname = modname.replace(/\//g, '.');
+	
 	let [preload, loaded] = getPackageMethods();
-
 	let modinit = preload.rawget(modname);
+
 	if (modinit === void 0) {
 		throw new LuaError(`module '${modname}' not found:\n\tno field package.preload['${modname}']`);
 	}
