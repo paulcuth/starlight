@@ -136,7 +136,7 @@ const GENERATORS = {
 	DoStatement(node, outerScope) {
 		let { scope, scopeDef } = extendScope(outerScope);
 		let body = this.Chunk(node, scope);
-		return `()=>{\n${scopeDef}\n${body}\n}()`;
+		return `(()=>{\n${scopeDef}\n${body}\n})()`;
 	},
 
 
@@ -473,13 +473,13 @@ export function getRuntimeInit() {
 	
 	init += 'let Tget, Tset, Tins, $get, $set, $setLocal, __star_shift;';
 
-	init += '()=>{';
+	init += '(()=>{';
 	init += 'let call = Function.prototype.call, bind = call.bind.bind(call), Tproto = __star_T.prototype, $proto = __star.globalScope.constructor.prototype;';
 
 	init += 'Tget = bind(Tproto.get), Tset = bind(Tproto.set), Tins = bind(Tproto.insert);';
 	init += '$get = bind($proto.get), $set = bind($proto.set), $setLocal = bind($proto.setLocal);';
 	init += '__star_shift = bind(Array.prototype.shift);';
-	init += '}();'
+	init += '})();'
 
 	return init;
 }
