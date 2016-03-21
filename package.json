@@ -1,7 +1,7 @@
 {
   "name": "starlight",
   "description": "A Lua -> ES6 transpiler",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "author": {
     "name": "Paul Cuthbertson"
   },
