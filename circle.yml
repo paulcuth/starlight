@@ -10,9 +10,6 @@
     npm:
       branch: master
       commands:
-        - git config --global user.email 'circleci.agent@paulcuth.me.uk'
-        - git config --global user.name "CircleCI"
-        - node ci/bump-project-version
         - grunt grunt-plugin
         - node ci/sync-plugin-version
         - node ci/tag
