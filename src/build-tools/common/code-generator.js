@@ -478,7 +478,7 @@ function generate(ast, scope) {
 
 
 export function getRuntimeInit() {
-	let init = '"use strict";\n';
+	let init = '"use strict"; if (typeof global === \'undefined\' && typeof window !== \'undefined\') { window.global = window; }\n';
 	init += 'let __star = global.starlight.runtime, $0 = __star.globalScope, $ = $0, __star_tmp;\n';
 	init += 'let __star_call = __star.call, __star_T = __star.T, __star_op_bool = __star.op.bool;';
 	init += 'let __star_op_unm = __star.op.unm, __star_op_not = __star.op.not, __star_op_len = __star.op.len, __star_op_concat = __star.op.concat, __star_op_add = __star.op.add, __star_op_sub = __star.op.sub, __star_op_mul = __star.op.mul, __star_op_div = __star.op.div, __star_op_mod = __star.op.mod, __star_op_eq = __star.op.eq, __star_op_neq = __star.op.neq, __star_op_lt = __star.op.lt, __star_op_gt = __star.op.gt, __star_op_lte = __star.op.lte, __star_op_gte = __star.op.gte, __star_op_pow = __star.op.pow;';
