@@ -1,6 +1,7 @@
 import { default as T } from '../Table';
 import { default as LuaError } from '../LuaError';
 import { tostring } from './string';
+import printf from 'printf';
 
 import { 
 	coerceToNumber, 
@@ -134,6 +135,9 @@ export function find(s, pattern, init = 1, plain = false) {
 
 
 // TODO string.format (formatstring, ···)
+export function format(formatstring, ...args) {
+	return printf(formatstring, ...args);
+}
 
 
 export function gmatch(s, pattern) {
@@ -290,6 +294,7 @@ const string = new T({
 	char,
 	dump,
 	find,
+	format,
 	gmatch,
 	gsub,
 	len,

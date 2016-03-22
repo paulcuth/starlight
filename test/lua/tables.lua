@@ -50,6 +50,14 @@ assertTrue (a[2] == nil, 'Square brackets operation on table should return corre
 assertTrue (a[3] == 40, 'Square brackets operation on table should return correct value for index when keys are used in literal assignment [3]')
 assertTrue (a[4] == nil, 'Square brackets operation on table should return correct value for index when keys are used in literal assignment [4]')
 
+b = 'hello'
+a = {[b] = 'value'}
+assertEqual (a.hello, 'value', 'Identifier should be able to be used as a key')
+
+b = 2
+a = {[b] = 'value2'}
+assertEqual (a[2], 'value2', 'Numeric identifier should be able to be used as a key')
+
 
 
 

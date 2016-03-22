@@ -152,6 +152,22 @@ assertTrue (not (f or f), 'Or operator should return false if both operands are 
 assertEqual(t and 0 or 1, 0, 'Ternary logic should return the correct result[1]')
 assertEqual(f and 0 or 1, 1, 'Ternary logic should return the correct result[2]')
 
+function f(x)
+	return x
+end
+
+assertEqual (f('moo') or false, 'moo', 'Or operator should work with function calls as left operand (+ve)')
+assertEqual (f(false) or false, false, 'Or operator should work with function calls as left operand (-ve)')
+assertEqual (false or f('moo'), 'moo', 'Or operator should work with function calls as right operand (+ve)')
+assertEqual (false or f(false), false, 'Or operator should work with function calls as right operand (-ve)')
+assertEqual (f(false) or f('moo'), 'moo', 'Or operator should work with function calls as both operands')
+
+assertEqual (f('moo') and 'baa', 'baa', 'And operator should work with function calls as left operand (+ve)')
+assertEqual (f(false) and true, false, 'And operator should work with function calls as left operand (-ve)')
+assertEqual (true and f('moo'), 'moo', 'And operator should work with function calls as right operand (+ve)')
+assertEqual (true and f(false), false, 'And operator should work with function calls as right operand (-ve)')
+assertEqual (f('moo') and f('moo'), 'moo', 'And operator should work with function calls as both operands')
+
 
 local function test()
     return true

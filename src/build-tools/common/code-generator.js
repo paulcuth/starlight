@@ -136,7 +136,7 @@ const GENERATORS = {
 	DoStatement(node, outerScope) {
 		let { scope, scopeDef } = extendScope(outerScope);
 		let body = this.Chunk(node, scope);
-		return `()=>{\n${scopeDef}\n${body}\n}()`;
+		return `(()=>{\n${scopeDef}\n${body}\n})()`;
 	},
 
 
@@ -206,7 +206,7 @@ const GENERATORS = {
 			name = identifier.property.replace(/'/g, '');
 
 			if (node.identifier.indexer === ':') {
-				params.unshift("$set($, 'self', __star_shift(args))");
+				params.unshift("$setLocal($, 'self', __star_shift(args))");
 			}
 		} else {
 			name = identifier;
@@ -295,6 +295,14 @@ const GENERATORS = {
 		let right = scoped(node.right, scope);
 		let operator = node.operator;
 
+		if (isCallExpression(node.left)) {
+			left += '[0]';
+		}
+
+		if (isCallExpression(node.right)) {
+			right += '[0]';
+		}
+
 		if (operator === 'and') {
 			return `(!__star.op.bool(${left})?${left}:${right})`
 
@@ -355,8 +363,12 @@ const GENERATORS = {
 
 
 	StringLiteral(node) {
-		let escaped = node.value.replace(/["']/g, '\\$&').replace(/\n/g, '\\n');
-		return `'${escaped}'`;
+		const raw = node.raw.replace(/\\(\d+)/g, (_, oct) => `\\x0${parseInt(oct, 8).toString(16)}`);
+		if (/^\[\[[^]*]$/m.test(raw)) {
+			return `\`${raw.substr(2, raw.length - 4)}\``;
+		} else {
+			return raw;
+		}
 	},
 
 
@@ -389,7 +401,7 @@ const GENERATORS = {
 
 
 	TableKey(node, scope) {
-		let name = generate(node.key, scope);
+		let name = scoped(node.key, scope);
 		let value = scoped(node.value, scope);
 		return `Tset(t, ${name}, ${value})`;
 	},
@@ -466,20 +478,21 @@ function generate(ast, scope) {
 
 
 export function getRuntimeInit() {
-	let init = 'let __star = global.starlight.runtime, $0 = __star.globalScope, $ = $0, __star_tmp;\n';
+	let init = '"use strict"; if (typeof global === \'undefined\' && typeof window !== \'undefined\') { window.global = window; }\n';
+	init += 'let __star = global.starlight.runtime, $0 = __star.globalScope, $ = $0, __star_tmp;\n';
 	init += 'let __star_call = __star.call, __star_T = __star.T, __star_op_bool = __star.op.bool;';
 	init += 'let __star_op_unm = __star.op.unm, __star_op_not = __star.op.not, __star_op_len = __star.op.len, __star_op_concat = __star.op.concat, __star_op_add = __star.op.add, __star_op_sub = __star.op.sub, __star_op_mul = __star.op.mul, __star_op_div = __star.op.div, __star_op_mod = __star.op.mod, __star_op_eq = __star.op.eq, __star_op_neq = __star.op.neq, __star_op_lt = __star.op.lt, __star_op_gt = __star.op.gt, __star_op_lte = __star.op.lte, __star_op_gte = __star.op.gte, __star_op_pow = __star.op.pow;';
 	init += 'let __star_op_and = __star.op.and, __star_op_or = __star.op.or;\n';
 	
 	init += 'let Tget, Tset, Tins, $get, $set, $setLocal, __star_shift;';
 
-	init += '()=>{';
+	init += '(()=>{';
 	init += 'let call = Function.prototype.call, bind = call.bind.bind(call), Tproto = __star_T.prototype, $proto = __star.globalScope.constructor.prototype;';
 
 	init += 'Tget = bind(Tproto.get), Tset = bind(Tproto.set), Tins = bind(Tproto.insert);';
 	init += '$get = bind($proto.get), $set = bind($proto.set), $setLocal = bind($proto.setLocal);';
 	init += '__star_shift = bind(Array.prototype.shift);';
-	init += '}();'
+	init += '})();'
 
 	return init;
 }
