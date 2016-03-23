@@ -5,6 +5,12 @@ if (typeof global === undefined) {
 	global = window;
 }
 
+const SUPPORTED_MIME_TYPES = [
+	'text/lua',
+	'text/x-lua',
+	'application/lua',
+	'application/x-lua',
+];
 
 function parseToString (input) {
 	let ast = parser.parse(input);
@@ -26,9 +32,10 @@ function parse (input) {
 }
 
 function runScriptTags() {
-	var scripts = document.querySelectorAll('script[type="application/x-lua"]');
-	var script, i, modname, scriptBody;
-	var lua = '';
+	const selectors = SUPPORTED_MIME_TYPES.map(t => `script[type="${t}"]`);
+	const scripts = document.querySelectorAll(selectors.join());
+	let script, i, modname, scriptBody;
+	let lua = '';
 
 	for (i = 0; script = scripts[i]; i++) {
 		modname = script.dataset.modname;
