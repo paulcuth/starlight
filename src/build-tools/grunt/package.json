@@ -33,5 +33,8 @@
   },
   "keywords": [
     "gruntplugin"
-  ]
+  ],
+  "dependencies": {
+    "luaparse": "^0.2.0"
+  }
 }
