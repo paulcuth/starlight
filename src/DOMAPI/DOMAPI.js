@@ -153,7 +153,14 @@
 		var val, i;
 		for (i in window) {
 			if (i !== 'print' && i !== 'window' && win[i] !== null) {
-				val = _G.get('window').get(i);
+				try {
+					val = _G.get('window').get(i);
+        } catch(e) {
+          val = function () {
+            throw new starlight.runtime.LuaError('error accessing property: ' + e.message);
+          }
+        }
+        
 				_G.set(i, typeof val == 'function' ? val.bind(void 0, window) : val);
 			}
 		}
