@@ -1,5 +1,5 @@
 # grunt-starlight
-A Lua to ES6 translator
+A Lua to ES6 translator  
 http://starlight.paulcuth.me.uk
 
 ## Getting Started

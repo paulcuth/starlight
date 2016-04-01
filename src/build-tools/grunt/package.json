@@ -1,6 +1,6 @@
 {
   "name": "grunt-starlight",
-  "description": "A Lua -> ES6 transpiler",
+  "description": "A Lua to ES6 translator",
   "version": "0.0.1",
   "homepage": "https://github.com/paulcuth/starlight",
   "author": {
