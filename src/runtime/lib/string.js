@@ -43,6 +43,9 @@ function translatePattern (pattern) {
 	// TODO Add support for balanced character matching (not sure this is easily achieveable).
 	pattern = '' + pattern;
 
+	// Replace single backslash with double backslashes
+	pattern = pattern.replace(new RegExp('\\\\', 'g'), '\\\\');
+
 	for (let i in ROSETTA_STONE) {
 		if (ROSETTA_STONE.hasOwnProperty(i)) {
 			pattern = pattern.replace(new RegExp(i, 'g'), ROSETTA_STONE[i]);
