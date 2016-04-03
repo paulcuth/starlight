@@ -233,4 +233,5 @@ for name, test in pairs(tests) do
 	
 end
 
+assertTrue('abc' < 'def', 'Strings should be comparable')
 
