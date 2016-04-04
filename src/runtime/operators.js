@@ -24,6 +24,14 @@ function binaryArithmetic(left, right, metaMethodName, callback) {
 }
 
 
+function binaryStringArithmetic(left, right, metaMethodName, callback) {
+	if (typeof left == 'string' && typeof right == 'string') {
+		return callback(left, right);
+	}
+	return binaryArithmetic(left, right, metaMethodName, callback);
+}
+
+
 function concat(left, right) {
 	let mt, f;
 
@@ -134,8 +142,8 @@ const op = {
 	},
 	mod: (left, right) => binaryArithmetic(left, right, '__mod', mod),
 	pow: (left, right) => binaryArithmetic(left, right, '__pow', Math.pow),
-	lt: (left, right) => binaryArithmetic(left, right, '__lt', (l, r) => l < r),
-	lte: (left, right) => binaryArithmetic(left, right, '__le', (l, r) => l <= r),
+	lt: (left, right) => binaryStringArithmetic(left, right, '__lt', (l, r) => l < r),
+	lte: (left, right) => binaryStringArithmetic(left, right, '__le', (l, r) => l <= r),
 	
 	gt(left, right) {
 		return !op.lte(left, right);
