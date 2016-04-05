@@ -59,16 +59,16 @@ function parseScriptTags (tags) {
 				let x = superagent
 					.get(src)
 					.end((error, response) => {
-		        if (error) {
-		          resolve({});
+						if (error) {
+							resolve({});
 
-		        } else {
-		          resolve({
+						} else {
+							resolve({
 								modname: tag.dataset.modname,
 								body: response.text
 							});
-		        }
-		      });
+						}
+					});
 			}));
 
 		} else {
