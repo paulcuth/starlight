@@ -472,7 +472,6 @@ end
 
 
 
-
 -- gsub
 
 a = '<%?xml version="1.0" encoding="UTF%-8"%?>'
@@ -514,6 +513,9 @@ assertTrue (d == ':X:X:X:X:X:', 'string.gsub() should replace the matched part o
 c = string.gsub (';a;', 'a*', 'ITEM')
 assertTrue (c == 'ITEM;ITEMITEM;ITEM', 'string.gsub() should replace the matched part of the string[2]')
 
+a = 'abc\\def'
+b = string.gsub(a, '\\', '\\\\')
+assertEqual (b, 'abc\\\\def', 'Allow backslashes in regexes')
     
 
 

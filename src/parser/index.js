@@ -1,5 +1,7 @@
 import { getRuntimeInit, generateJS } from './code-generator';
 import { default as parser } from 'luaparse';
+import superagent from 'superagent';
+
 
 if (typeof global === undefined) {
 	global = window;
@@ -27,33 +29,82 @@ function parseToString (input) {
 	return js;
 }
 
+
 function parse (input) {
 	return (new Function('var global = this;' + parseToString(input))).bind(global || window);
 }
 
+
 function runScriptTags() {
 	const selectors = SUPPORTED_MIME_TYPES.map(t => `script[type="${t}"]`);
-	const scripts = document.querySelectorAll(selectors.join());
+	const scriptTags = [...document.querySelectorAll(selectors.join())];
 	let script, i, modname, scriptBody;
 	let lua = '';
 
-	for (i = 0; script = scripts[i]; i++) {
-		modname = script.dataset.modname;
-		scriptBody = script.textContent;
-
-		if (modname) {
-			lua += " rawset(package.preload, '" + modname + "', function(...) " + scriptBody + " end) ";
-		} else {
-			lua += scriptBody;
-		}
-	}
-
-	if (lua) {
-		parse(lua)();
-	}
+	const { immediate, deferred } = parseScriptTags(scriptTags);
+	runNextTag([...immediate, ...deferred]);
 }
 
 
+function parseScriptTags (tags) {
+	const immediate = [];
+	const deferred = [];
+
+	tags.forEach(tag => {
+		const src = tag.src;
+
+		if (src) {
+			const arr = tag.defer? deferred : immediate;
+			arr.push(new Promise((resolve, reject) => {
+				let x = superagent
+					.get(src)
+					.end((error, response) => {
+						if (error) {
+							resolve({});
+
+						} else {
+							resolve({
+								modname: tag.dataset.modname,
+								body: response.text
+							});
+						}
+					});
+			}));
+
+		} else {
+			immediate.push(Promise.resolve({
+				modname: tag.dataset.modname,
+				body: tag.textContent,
+			}));
+		}
+	});
+
+	return { immediate, deferred };
+}
+
+
+function runNextTag (tags) {
+	if (!tags.length) {
+		return;
+	}
+
+	let tag;
+	[tag, ...tags] = tags;
+
+	tag.then(({ modname, body, error }) => {
+		if (body !== undefined) {
+			if (modname) {
+				body = " rawset(package.preload, '" + modname + "', function(...) " + body + " end) ";
+			}
+			parse(body)();		
+		}
+
+		runNextTag(tags);
+	});
+}
+
+
+// Init
 if (global.document && global.document.querySelector('script[src$="starlight.js"][data-run-script-tags]')) {
 	global.document.addEventListener('DOMContentLoaded', runScriptTags);
 }
