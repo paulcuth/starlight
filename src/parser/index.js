@@ -22,7 +22,9 @@ function parseToString (input) {
 	if (babel) {
 		js = `()=>{${js}}`;
 		js = babel.transform(js).code;
-		js = js.substr(14, js.length - 15);
+		
+		const pos = js.indexOf(';');
+		js = js.substr(pos + 1, js.length - pos - 2);
 		js = js.replace('\n(function','\nreturn (function') + '.apply(void 0, arguments);';
 	}
 
