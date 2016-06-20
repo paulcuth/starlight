@@ -46,7 +46,10 @@ export default class Table {
 			if (type(this) == 'string') {
 				return stringLib.get(key);
 
-			} else if (type(this) == 'userdata') {
+			} else if (
+				type(this) === 'userdata'
+				|| (type(this) === 'function' && key === 'new') // exception for DOMAPI compat with Moonshine
+			) {
 				if (key in this) {
 					return this[key];
 				}
@@ -77,7 +80,7 @@ export default class Table {
 
 	rawget(key) {
 		switch (typeof key) {
-			case 'string': 	return this.strValues[key];
+			case 'string': 	return Object.prototype.hasOwnProperty.call(this.strValues, key) ? this.strValues[key] : void 0;
 			case 'number':
 				if (key > 0 && key == key >> 0) {
 					return this.numValues[key];
