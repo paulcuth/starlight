@@ -2,10 +2,12 @@ import { default as LuaError } from './LuaError';
 import { type } from './lib/globals';
 
 let count = 0;
-let stringLib;
+let stringLib, getn;
 
-export function registerStringLib(lib) {
-	stringLib = lib; // Can't import it directly because that'll create a circular dependency. :(
+export function registerLibs(libs) {
+	// Can't import directly because they'll create a circular dependencies. :(
+	stringLib = libs.string;
+	getn = libs.getn;
 };
 
 
@@ -186,10 +188,6 @@ export default class Table {
 
 
   toObject() {
-    // TODO: Clean this up:
-    const _G = starlight.runtime.globalScope;
-    const getn = _G.get('table').get('getn');
-
     const isArr = getn(this) > 0;
     const result = isArr? [] : {};
     const numValues = this.numValues;
