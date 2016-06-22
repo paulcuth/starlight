@@ -1,7 +1,6 @@
 import { default as LuaError } from './LuaError';
 import { type } from './lib/globals';
 
-
 let count = 0;
 let stringLib;
 
@@ -184,4 +183,34 @@ export default class Table {
 			return 'table: 0x' + this.index.toString(16);
 		}
 	}
+
+
+  toObject() {
+    // TODO: Clean this up:
+    const _G = starlight.runtime.globalScope;
+    const getn = _G.get('table').get('getn');
+
+    const isArr = getn(this) > 0;
+    const result = isArr? [] : {};
+    const numValues = this.numValues;
+    const strValues = this.strValues;
+    
+    let i;
+    const l = numValues.length;
+
+    for (i = 1; i < l; i++) {
+      const propValue = numValues[i];
+      result[i - 1] = (propValue instanceof Table)? propValue.toObject() : propValue;
+    }
+
+    for (i in strValues) {
+      if (strValues.hasOwnProperty(i)) {
+        const propValue = strValues[i];
+        result[i] = (propValue instanceof Table)? propValue.toObject() : propValue;
+      }
+    }
+      
+    return result;
+  }
+
 };
