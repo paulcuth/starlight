@@ -1,3 +1,5 @@
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+
 export default class Scope {
 	constructor(variables = {}) {
 		this._variables = variables;
@@ -10,7 +12,7 @@ export default class Scope {
 	set(key, value) {
 		let vars = this._variables;
 
-		if (this._variables.hasOwnProperty(key) || !this.parent) {
+		if (hasOwnProperty.call(this._variables, key) || !this.parent) {
 			vars[key] = value;
 		} else {
 			this.parent.set(key, value);

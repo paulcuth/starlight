@@ -1,7 +1,7 @@
 import { default as Scope } from './Scope';
 import { default as globals, type } from './lib/globals';
 import { default as operators } from './operators';
-import { default as Table, registerStringLib } from './Table';
+import { default as Table, registerLibs } from './Table';
 import { default as LuaError } from './LuaError';
 
 
@@ -62,12 +62,11 @@ let runtime = namespace.runtime = {
 import { default as math } from './lib/math';
 _G.set('math', math);
 
-import { default as table } from './lib/table';
+import { default as table, getn } from './lib/table';
 _G.set('table', table);
 
 import { default as string } from './lib/string';
 _G.set('string', string);
-registerStringLib(string);
 
 import { default as os } from './lib/os';
 _G.set('os', os);
@@ -75,4 +74,5 @@ _G.set('os', os);
 import { default as _package } from './lib/package';
 _G.set('package', _package);
 
+registerLibs({ string, getn });
 

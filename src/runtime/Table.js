@@ -1,12 +1,13 @@
 import { default as LuaError } from './LuaError';
 import { type } from './lib/globals';
 
-
 let count = 0;
-let stringLib;
+let stringLib, getn;
 
-export function registerStringLib(lib) {
-	stringLib = lib; // Can't import it directly because that'll create a circular dependency. :(
+export function registerLibs(libs) {
+	// Can't import directly because they'll create a circular dependencies. :(
+	stringLib = libs.string;
+	getn = libs.getn;
 };
 
 
@@ -46,7 +47,10 @@ export default class Table {
 			if (type(this) == 'string') {
 				return stringLib.get(key);
 
-			} else if (type(this) == 'userdata') {
+			} else if (
+				type(this) === 'userdata'
+				|| (type(this) === 'function' && key === 'new') // exception for DOMAPI compat with Moonshine
+			) {
 				if (key in this) {
 					return this[key];
 				}
@@ -77,7 +81,7 @@ export default class Table {
 
 	rawget(key) {
 		switch (typeof key) {
-			case 'string': 	return this.strValues[key];
+			case 'string': 	return Object.prototype.hasOwnProperty.call(this.strValues, key) ? this.strValues[key] : void 0;
 			case 'number':
 				if (key > 0 && key == key >> 0) {
 					return this.numValues[key];
@@ -181,4 +185,30 @@ export default class Table {
 			return 'table: 0x' + this.index.toString(16);
 		}
 	}
+
+
+  toObject() {
+    const isArr = getn(this) > 0;
+    const result = isArr? [] : {};
+    const numValues = this.numValues;
+    const strValues = this.strValues;
+    
+    let i;
+    const l = numValues.length;
+
+    for (i = 1; i < l; i++) {
+      const propValue = numValues[i];
+      result[i - 1] = (propValue instanceof Table)? propValue.toObject() : propValue;
+    }
+
+    for (i in strValues) {
+      if (strValues.hasOwnProperty(i)) {
+        const propValue = strValues[i];
+        result[i] = (propValue instanceof Table)? propValue.toObject() : propValue;
+      }
+    }
+      
+    return result;
+  }
+
 };

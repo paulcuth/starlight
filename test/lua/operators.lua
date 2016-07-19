@@ -30,6 +30,11 @@
 local a = 1
 assertTrue (a == 1, 'Local should retain value')
 
+local a, b = 12, 34
+a, b = b, a
+assertTrue (a == 34, 'Assignment should be able to reverse values [1]')
+assertTrue (b == 12, 'Assignment should be able to reverse values [2]')
+
 local a, b, c, d = 5, 20, 0, nil
 assertTrue (a == 5, 'Local should change value')
 assertTrue (b == 20, 'Local should accept multiple assignments')

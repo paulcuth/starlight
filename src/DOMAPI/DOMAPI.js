@@ -36,7 +36,7 @@
 						children = Object.getOwnPropertyNames(property);
 
 						for (i = 0; child = children[i]; i++) {
-							if (child == 'caller' || child == 'callee' || child == 'arguments') continue;	// Avoid issues in strict mode. Fixes mooshine issue #24. 
+							if (child == 'caller' || child == 'callee' || child == 'arguments') continue;	// Avoid issues in strict mode. Fixes moonshine issue #24. 
 							f[child] = property[child];
 						}
 					}
@@ -89,13 +89,6 @@
 
 	function luaToJS (val) {
 		var mt;
-
-		// Make shine.Functions invokable
-		if (val instanceof Function) {
-			return function () { 
-				return jsToLua(val.apply(void 0, convertArguments(arguments, jsToLua)));
-			};
-		}
 
 		if (val instanceof T) {
 			// If object has been wrapped by jsToLua(), use original object instead
@@ -151,19 +144,25 @@
 	// Add extact method
 	win.set('extract', function () {
 		var val, i;
-		for (i in window) {
-			if (i !== 'print' && i !== 'window' && win[i] !== null) {
-				try {
-					val = _G.get('window').get(i);
-        } catch(e) {
-          val = function () {
-            throw new starlight.runtime.LuaError('error accessing property: ' + e.message);
-          }
-        }
-        
-				_G.set(i, typeof val == 'function' ? val.bind(void 0, window) : val);
-			}
-		}
+		var obj = window;
+
+		do {
+	    Object.getOwnPropertyNames(obj).forEach(function (key) {
+
+				if (key !== 'print' && key !== 'window' && win[i] !== null) {
+					try {
+						val = _G.get('window').get(key);
+					} catch (e) {
+						val = function () {
+							throw new starlight.runtime.LuaError('error accessing property: ' + e.message);
+						}
+					}
+					
+					_G.set(key, typeof val == 'function' ? val.bind(void 0, window) : val);
+				}
+
+   		});
+		} while (obj = Object.getPrototypeOf(obj));
 	});
 
 
