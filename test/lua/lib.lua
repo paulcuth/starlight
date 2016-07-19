@@ -527,6 +527,17 @@ assertTrue (f == '-inf', 'tostring() should convert negative infinity to "-inf"'
 assertTrue (g == 'nan', 'tostring() should convert not-a-number to "nan"')
 assertTrue (h == 'true', 'tostring() should convert a boolean to a string')
 
+a = tostring ('')
+b = tostring ('moo')
+c = tostring (0)
+d = tostring (false)
+
+assertTrue (a == '', 'tostring() should convert a zero-length string to a string')
+assertTrue (b == 'moo', 'tostring() should convert a non-zero-length string to a string')
+assertTrue (c == '0', 'tostring() should convert zero to a string')
+assertTrue (d == 'false', 'tostring() should convert false to a string')
+
+
 a = {}
 setmetatable(a, { __tostring = function () return 'Les Revenants' end })
 b = tostring (a)

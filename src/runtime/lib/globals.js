@@ -348,7 +348,7 @@ export function tostring(e) {
 		return e.hasOwnProperty('toString')? `${e}` : 'function: [host code]';
 	}
 
-	return coerceToString(e) || 'userdata';
+	return coerceToString(e);
 }
 
 
