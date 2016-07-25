@@ -515,8 +515,11 @@ assertTrue (c == 'ITEM;ITEMITEM;ITEM', 'string.gsub() should replace the matched
 
 a = 'abc\\def'
 b = string.gsub(a, '\\', '\\\\')
-assertEqual (b, 'abc\\\\def', 'Allow backslashes in regexes')
+assertEqual (b, 'abc\\\\def', 'string.gsub() should allow backslashes')
     
+a = "a = 'a', b = 'b', c = 'c',"
+b = string.gsub(a, ",$", "")
+assertEqual (b, "a = 'a', b = 'b', c = 'c'", 'string.gsub() should match $ with end of string')
 
 
 
