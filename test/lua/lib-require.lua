@@ -44,6 +44,8 @@ assertTrue(type(sub2) == 'table', 'Module should be able to load more modules us
 mainGlobal1 = 'innerGlbl'
 local innerLocal = 'innerLoc'
 
+moduleInitCount = moduleInitCount + 1
+
 
 return {
 	getValue = function ()

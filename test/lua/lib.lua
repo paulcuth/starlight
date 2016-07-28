@@ -313,6 +313,7 @@ assertTrue (c == nil, 'pcall() should only return 2 items when the function erro
 	
 mainGlobal1 = 'mainGlbl'
 mainGlobal2 = 'mainGlbl'
+moduleInitCount = 0
 
 local mainLocal = 'mainLoc'
 
@@ -324,11 +325,14 @@ assertTrue (result.getValue() == 'modVal', 'require() should return the value th
 
 assertTrue (package.loaded['lib-require'] == result, 'Module loaded by require() should also be available in package.loaded[modname]')
 
+assertTrue (moduleInitCount == 1, 'require() should initialise module')
 assertTrue (mainGlobal1 == 'innerGlbl', 'require() should pass the same global namespace into the module[1]')
 assertTrue (mainGlobal2 == 'mainGlbl', 'require() should pass the same global namespace into the module[2]')
 assertTrue (innerLocal == nil, 'Module locals should not leak into outer environment in a require() call')
 
-
+local result2 = require 'lib-require'
+assertTrue (moduleInitCount == 1, 'require() should only initialise a module once')
+assertTrue (result == result2, 'require() should return the same value across multiple calls')
 
 
 
