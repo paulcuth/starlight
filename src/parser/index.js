@@ -96,9 +96,9 @@ function runNextTag (tags) {
 	tag.then(({ modname, body, error }) => {
 		if (body !== undefined) {
 			if (modname) {
-				body = " rawset(package.preload, '" + modname + "', function(...) " + body + " end) ";
+				body = ` rawset(package.preload, '${modname}', function(...) ${body} end) `;
 			}
-			parse(body)();		
+			parse(body)();
 		}
 
 		runNextTag(tags);

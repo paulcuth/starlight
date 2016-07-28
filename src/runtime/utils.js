@@ -133,7 +133,7 @@ export function coerceToString(val, errorMessage) {
 			return global.isNaN(val)? 'nan' : `${val}`;
 
 		default: 
-			return throwCoerceError(val, errorMessage) || '';
+			return throwCoerceError(val, errorMessage) || 'userdata';
 	}
 }
 

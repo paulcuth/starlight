@@ -239,13 +239,19 @@ export function _require(modname) {
 	modname = modname.replace(/\//g, '.');
 	
 	let [preload, loaded] = getPackageMethods();
+	let mod = loaded.rawget(modname);
+
+	if (mod) {
+		return mod;
+	}
+
 	let modinit = preload.rawget(modname);
 
 	if (modinit === void 0) {
 		throw new LuaError(`module '${modname}' not found:\n\tno field package.preload['${modname}']`);
 	}
 
-	let mod = modinit(modname)[0];
+	mod = modinit(modname)[0];
 	loaded.rawset(modname, mod !== void 0 ? mod : true);
 
  	return mod;
@@ -348,7 +354,7 @@ export function tostring(e) {
 		return e.hasOwnProperty('toString')? `${e}` : 'function: [host code]';
 	}
 
-	return coerceToString(e) || 'userdata';
+	return coerceToString(e);
 }
 
 

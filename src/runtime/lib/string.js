@@ -198,12 +198,18 @@ export function gsub(s, pattern, repl, n = Infinity) {
 			
 		} else {
 			str = `${repl}`.replace(/%([0-9])/g, (m, i) => match[i]);
+
 		}
 
-		if (match[0].length === 0 && lastMatch === void 0) {
-		 	prefix = '';
+		if (match[0].length === 0) {
+			if (lastMatch === void 0) {
+			 	prefix = '';
+			} else {
+				prefix = s.substr(0, 1);
+			} 
+
 		} else {
-			prefix = s.split(match[0], 1)[0];
+			prefix = s.substr(0, match.index);
 		}
 
 		lastMatch = match[0];
