@@ -215,7 +215,8 @@ const GENERATORS = {
 		} else if (isMemberExpr) {
 			return identifier.set(funcDef);
 		} else {
-			return `$set($, '${identifier}', ${funcDef})`;
+			const local = node.isLocal ? 'Local' : '';
+			return `$set${local}($, '${identifier}', ${funcDef})`;
 		}
 	},
 

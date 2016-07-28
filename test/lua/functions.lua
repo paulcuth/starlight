@@ -107,3 +107,23 @@ x = addThree (4)
 assertTrue (x == 7, 'Functions should be able to be curried')
 
 
+do
+	local function x()
+		return 'inner'
+	end
+
+	function y()
+		return x()
+	end
+end
+
+function x()
+	return 'outer'
+end
+
+local z = y()
+assertTrue (z == 'inner', 'Local functions should be locally scoped')
+
+
+
+
