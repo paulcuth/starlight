@@ -87,7 +87,9 @@ export function getmetatable(table) {
 
 export function ipairs(t) {
 	t = coerceArgToTable(t, 'ipairs', 1);
-	return [ipairsIterator, t, 0];
+	const mt = getmetatable(t);
+	const mm = mt && mt.get('__ipairs');
+	return mm ? mm(t).slice(0, 3) : [ipairsIterator, t, 0];
 }
 
 
@@ -185,7 +187,9 @@ export function next(table, index) {
 
 export function pairs(table) {
 	table = coerceArgToTable(table, 'pairs', 1);
-	return [next, table];
+	const mt = getmetatable(table);
+	const mm = mt && mt.get('__pairs');
+	return mm ? mm(table).slice(0, 3) : [next, table];
 }
 
 
