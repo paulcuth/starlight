@@ -212,3 +212,30 @@ end
 assertEqual (b, 'THIS SHOULD EXECUTE', 'If clause with function call should only use first returned value. [2]')
 
 
+-- do block
+
+local a = 1
+local b = 10
+do
+	local a = 2
+	b = 20
+	assertEqual (a, 2, 'Do block should use local variables')
+	assertEqual (b, 20, 'Do block should set upvalues')
+end
+assertEqual (a, 1, 'Do block should create its own local variable scope')
+assertEqual (b, 20, 'Do block should update upvalues')
+
+a = '1'
+function testReturn()
+	a = a..'2'
+	do
+		a = a..'3'
+		return
+	end
+	a = a..'X'
+end
+
+testReturn()
+assertEqual (a, '123', 'Do block containing return should return from parent function')
+
+		

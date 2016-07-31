@@ -129,7 +129,8 @@ const GENERATORS = {
 	DoStatement(node, outerScope) {
 		let { scope, scopeDef } = extendScope(outerScope);
 		let body = this.Chunk(node, scope);
-		return `(()=>{\n${scopeDef}\n${body}\n})()`;
+		scopeDef = scopeDef.replace(',', ';');
+		return `${scopeDef}\n${body}\n$=$${outerScope};`;
 	},
 
 
