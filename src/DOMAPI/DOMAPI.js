@@ -149,7 +149,7 @@
 
 			for (i in strValues) {
 				if (strValues.hasOwnProperty(i)) {
-					result[i] = (val[i] instanceof T)? luaToJS(val[i]) : val[i];
+					result[i] = (strValues[i] instanceof T)? luaToJS(strValues[i]) : strValues[i];
 				}
 			}
 			
