@@ -98,7 +98,33 @@ end
 assertTrue (a == '[1==1]', 'Break should exit generic for loop')
 
 
+function iter(t, i)
+  if i < 5 then
+ 	  return i + 1, i
+	else
+		return nil
+	end
+end	
+a = ''
+for key, val in iter, {}, 2 do
+	a = a..'['..tostring(key)..'=='..tostring(val)..']'
+end
+assertTrue (a == '[3==2][4==3][5==4]', 'Generic for loop should accept an expression list')	
 
+function iter(t, i)
+	i = i + 1
+	v = t[i]
+	if v then
+ 	  return i, v, v * 2
+	end
+end	
+a = ''
+for x,y,z in iter, {4,5,6}, 0 do
+	a = a..'['..tostring(x)..','..tostring(y)..','..tostring(z)..']'
+end
+assertTrue (a == '[1,4,8][2,5,10][3,6,12]', 'Generic for loop should pass all values returned from iterator to the variables in the loop')	
+
+	
 
 a = ''
 b = 1
@@ -238,4 +264,3 @@ end
 testReturn()
 assertEqual (a, '123', 'Do block containing return should return from parent function')
 
-		

@@ -152,19 +152,17 @@ const GENERATORS = {
 
 
 	ForGenericStatement(node, outerScope) {
-		console.assert(node.iterators.length === 1, 'Only one iterator is assumed. Need to implement more!');
-		let { scope, scopeDef } = extendScope(outerScope);
-		let iterator = scoped(node.iterators[0], outerScope);
-		let body = this.Chunk(node, scope);
+		const { scope, scopeDef } = extendScope(outerScope);
+		const iterators = parseExpressionList(node.iterators, outerScope).join(', ');
+		const body = this.Chunk(node, scope);
 
-		let variables = node.variables.map((variable, index) => {
-			let name = generate(variable, scope);
+		const variables = node.variables.map((variable, index) => {
+			const name = generate(variable, scope);
 			return `$setLocal($, '${name}', __star_tmp[${index}])`;
 		}).join(';\n');
 
-		let defs = scopeDef.split(', ');
-		return `${defs[0]};\n[$${scope}._iterator, $${scope}._table, $${scope}._next] = ${iterator};\nwhile((__star_tmp = __star_call($${scope}._iterator, $${scope}._table, $${scope}._next)),__star_tmp[0] !== undefined) {\nlet ${defs[1]}\$${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
-
+		const defs = scopeDef.split(', ');
+		return `${defs[0]};\n[$${scope}._iterator, $${scope}._table, $${scope}._next] = [${iterators}];\nwhile((__star_tmp = __star_call($${scope}._iterator, $${scope}._table, $${scope}._next)),__star_tmp[0] !== undefined) {\nlet ${defs[1]}\$${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
 	},
 
 
@@ -418,8 +416,9 @@ const GENERATORS = {
 		let body = this.Chunk(node, scope);
 
 		return `while(${condition}) {\n${scopeDef}\n${body}\n}`;
-	}
-}
+	},
+
+};
 
 
 
