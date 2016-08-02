@@ -125,5 +125,38 @@ local z = y()
 assertTrue (z == 'inner', 'Local functions should be locally scoped')
 
 
+function oneTwo() 
+	return 1, 2
+end
 
+function testReturnValues()
+	return oneTwo(), 10
+end
 
+local a, b, c = testReturnValues()
+assertTrue (a == 1, 'return should return the first item returned from a function call')
+assertTrue (b == 10, 'return should only return the first item from a function call when not last item in an expression list')
+assertTrue (c == nil, 'return should know when to stop')
+
+function testReturnValues2()
+	return 10, oneTwo()
+end
+
+local a, b, c = testReturnValues2()
+assertTrue (a == 10, 'return should return the first item in an expression list')
+assertTrue (b == 1, 'return should return the first item from a function call')
+assertTrue (c == 2, 'return should return all items returned from a function call if at end of expression list')
+
+function testArgs1(a, b, c)
+	assertTrue (a == 1, 'Function call in argument list should pass return value as argument')
+	assertTrue (b == 10, 'Function call in middle of argument list should only pass one argument')
+	assertTrue (c == nil, 'Arguments should stop at the end of argument list')
+end
+testArgs1(oneTwo(), 10)
+
+function testArgs2(a, b, c)
+	assertTrue (a == 10, 'Arguments should be passed in order')
+	assertTrue (b == 1, 'Function call should pass return values')
+	assertTrue (c == 2, 'Function call at end of argument list should pass all return values')
+end
+testArgs2(10, oneTwo())

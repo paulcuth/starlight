@@ -80,6 +80,37 @@ assertTrue (result == 7, 'Length operator should return the correct length of st
 result = #'moo\0'
 assertTrue (result == 4, 'Length operator should return the correct length of string with null character appended')
 
+function testUnpack()
+	return 1, 2, 3
+end
+
+local a, b, c = testUnpack(), 8
+assertTrue (a == 1, 'Local assignment should extract the first return value of a function call [1]')
+assertTrue (b == 8, 'Local assignment should only extract the first return value when function call not at end of expression list')
+assertTrue (c == nil, 'Local assignment should know when to stop')
+
+local a, b, c = 8, testUnpack()
+assertTrue (a == 8, 'Local assignment should set the first value from expression list')
+assertTrue (b == 1, 'Local assignment should extract the first return value of a function call [2]')
+assertTrue (c == 2, 'Local assignment should extract all return values when function call at end of expression list')
+
+local a, b, c
+do
+  a, b, c = testUnpack(), 8
+  assertTrue (a == 1, 'Assignment should extract the first return value of a function call [1]')
+  assertTrue (b == 8, 'Assignment should only extract the first return value when function call not at end of expression list')
+  assertTrue (c == nil, 'Assignment should know when to stop')
+
+  a, b, c = 8, testUnpack()
+  assertTrue (a == 8, 'Assignment should set the first value from expression list')
+  assertTrue (b == 1, 'Assignment should extract the first return value of a function call [2]')
+  assertTrue (c == 2, 'Assignment should extract all return values when function call at end of expression list')
+end
+
+
+
+a = 5
+b = 20
 do
 	local a = 5
 	local b = 3

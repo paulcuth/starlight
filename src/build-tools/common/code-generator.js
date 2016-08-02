@@ -35,13 +35,12 @@ const GENERATORS = {
 
 	AssignmentStatement(node, scope) {
 		let assignments = node.variables.map((variable, index) => {
-			let name;
-			name = scoped(variable, scope);
+			const name = scoped(variable, scope);
 
 			if (name instanceof MemExpr) {
 				return name.set(`__star_tmp[${index}]`);
 			} else {
-				let [match, args] = [].concat(name.match(/^\$get\((.*)\)$/));
+				const [match, args] = [].concat(name.match(/^\$get\((.*)\)$/));
 				if (!match) {
 					throw new Error('Unhandled'); 
 				}
@@ -50,15 +49,8 @@ const GENERATORS = {
 			}
 		}).join(';\n');
 
-		let values = node.init.map((init, index) => {
-			let value = scoped(init, scope);
-			if (isCallExpression(init)) {
-				return `...${value}`;
-			}
-			return value;
-		});
-
-		return `__star_tmp = [${values.join(', ')}];${assignments}`;
+		const values = parseExpressionList(node.init, scope).join(', ');
+		return `__star_tmp = [${values}];${assignments}`;
 	},
 
 
@@ -101,11 +93,7 @@ const GENERATORS = {
 
 	CallExpression(node, scope) {
 		let functionName = scoped(node.base, scope);
-		let args = node.arguments.map(arg => {
-			let path = scoped(arg, scope);
-			let prefix = isCallExpression(arg) ? '...' : '';
-			return `${prefix}${path}`;
-		});
+		const args = parseExpressionList(node.arguments, scope);
 
 		if (isCallExpression(node.base)) {
 			args.unshift(`${functionName}[0]`);
@@ -262,26 +250,13 @@ const GENERATORS = {
 
 
 	LocalStatement(node, scope) {
-		let canOptimise = true;
 		let assignments = node.variables.map((variable, index) => {
 			let name = generate(variable, scope);
 			return `$setLocal($, '${name}', __star_tmp[${index}])`;
 		}).join(';\n');
 
-		let values = node.init.map((init, index) => {
-			let value = scoped(init, scope);
-			if (isCallExpression(init)) {
-				canOptimise = false;
-				value = `...${value}`;
-			}
-			return value;
-		});
-
-		// if (canOptimise) {
-		// 	return assignments.replace(/__star_tmp\[(\d+)\]/g, (match, index) => values[index]);
-		// } else {
-			return `__star_tmp = [${values.join(', ')}];${assignments}`;
-		// }
+		const values = parseExpressionList(node.init, scope).join(', ');
+		return `__star_tmp = [${values}];${assignments}`;
 	},
 
 
@@ -343,10 +318,7 @@ const GENERATORS = {
 
 
 	ReturnStatement(node, scope) {
-		let args = node.arguments.map(arg => {
-			let result = scoped(arg, scope);
-			return isCallExpression(arg) ? `...${result}` : result;
-		}).join(', ');
+		const args = parseExpressionList(node.arguments, scope).join(', ');
 		return `return [${args}];`;
 	},
 
@@ -383,7 +355,14 @@ const GENERATORS = {
 
 
 	TableConstructorExpression(node, scope) {
-		let fields = node.fields.map(field => generate(field, scope)).join(';\n');
+		let fields = node.fields.map((field, index, arr) => {
+			if (field.type == 'TableValue') {
+				const isLastItem = index === arr.length - 1;
+				return this.TableValue(field, scope, isLastItem);
+			}
+			return generate(field, scope);
+		}).join(';\n');
+
 		return `new __star_T(t => {${fields}})`;
 	},
 
@@ -402,10 +381,12 @@ const GENERATORS = {
 	},
 
 
-	TableValue(node, scope) {
+	TableValue(node, scope, isLastItem) {
 		let value = scoped(node.value, scope);
-		let operator = isCallExpression(node.value) ? '...' : '';
-		return `Tins(t, ${operator}${value})`;
+		if (isCallExpression(node.value)) {
+			value = isLastItem ? `...${value}` : `${value}[0]`;
+		}
+		return `Tins(t, ${value})`;
 	},
 
 
@@ -440,6 +421,20 @@ const GENERATORS = {
 	}
 }
 
+
+
+function parseExpressionList(expressionNodeArray, scope) {
+	return expressionNodeArray.map((node, index, arr) => {
+		let value = scoped(node, scope);
+		if (isCallExpression(node)) {
+			if (index == arr.length - 1) {
+				return `...${value}`;
+			}
+			return `${value}[0]`;
+		}
+		return value;
+	});
+}
 
 
 function extendScope(outerIndex) {

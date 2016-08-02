@@ -150,3 +150,17 @@ assertTrue (t[1] == 'number', 'A numerical table index should return a different
 assertTrue (t['1'] == 'string', 'A numerical table index should return a different value than when using the same index as a sting. [2]')
 
 
+
+function testUnpack()
+	return 1, 2, 3
+end
+
+t = { testUnpack(), 10 }
+assertTrue (t[1] == 1, 'Function call in table literal should pass return value as argument')
+assertTrue (t[2] == 10, 'Function call in middle of table literal should only pass one argument')
+assertTrue (t[3] == nil, 'Table properties should stop at the end of table literal list')
+
+t = { 10, testUnpack() }
+assertTrue (t[1] == 10, 'Table literal should set properties in order')
+assertTrue (t[2] == 1, 'Function call in table literal should set properties')
+assertTrue (t[3] == 2, 'Function call at end of table literal should set properties for all return values')
