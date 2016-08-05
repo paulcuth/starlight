@@ -271,3 +271,17 @@ end
 
 assertTrue('abc' < 'def', 'Strings should be comparable')
 
+local a = '\t'
+local b = [[\n\t]]
+local c = [[\]]
+local d = '\32'
+local e = [[\32]]
+local f = '\0321'
+
+assertTrue(a == '	', 'A quoted string literal should escape chars after backslash')
+assertTrue(b == '\\n\\t', 'A long bracketed string literal should not escape chars after backslash [1]')
+assertTrue(c == '\\', 'A long bracketed string literal should not escape chars after backslash [2]')
+
+assertTrue(d == ' ', 'An escaped number should be converted to a char in quoted string literals')
+assertTrue(e == '\\32', 'An escaped number should not be converted to a char in long bracketed string literals')
+assertTrue(f == ' 1', 'An escaped number should only consume 3 digits in quoted string literals')

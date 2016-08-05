@@ -328,10 +328,11 @@ const GENERATORS = {
 
 
 	StringLiteral(node) {
-		const raw = node.raw.replace(/\\(\d+)/g, (_, oct) => `\\x0${parseInt(oct, 8).toString(16)}`);
+		let raw = node.raw;
 		if (/^\[\[[^]*]$/m.test(raw)) {
-			return `\`${raw.substr(2, raw.length - 4)}\``;
+			return `\`${raw.substr(2, raw.length - 4).replace(/\\/g, '\\\\')}\``;
 		} else {
+			raw = raw.replace(/([^\\])\\(\d{1,3})/g, (_, pre, dec) => `${pre}\\u${('000' + parseInt(dec, 10).toString(16)).substr(-4)}`);
 			return raw;
 		}
 	},
