@@ -35,13 +35,12 @@ const GENERATORS = {
 
 	AssignmentStatement(node, scope) {
 		let assignments = node.variables.map((variable, index) => {
-			let name;
-			name = scoped(variable, scope);
+			const name = scoped(variable, scope);
 
 			if (name instanceof MemExpr) {
 				return name.set(`__star_tmp[${index}]`);
 			} else {
-				let [match, args] = [].concat(name.match(/^\$get\((.*)\)$/));
+				const [match, args] = [].concat(name.match(/^\$get\((.*)\)$/));
 				if (!match) {
 					throw new Error('Unhandled'); 
 				}
@@ -50,15 +49,8 @@ const GENERATORS = {
 			}
 		}).join(';\n');
 
-		let values = node.init.map((init, index) => {
-			let value = scoped(init, scope);
-			if (isCallExpression(init)) {
-				return `...${value}`;
-			}
-			return value;
-		});
-
-		return `__star_tmp = [${values.join(', ')}];${assignments}`;
+		const values = parseExpressionList(node.init, scope).join(', ');
+		return `__star_tmp = [${values}];${assignments}`;
 	},
 
 
@@ -101,11 +93,7 @@ const GENERATORS = {
 
 	CallExpression(node, scope) {
 		let functionName = scoped(node.base, scope);
-		let args = node.arguments.map(arg => {
-			let path = scoped(arg, scope);
-			let prefix = isCallExpression(arg) ? '...' : '';
-			return `${prefix}${path}`;
-		});
+		const args = parseExpressionList(node.arguments, scope);
 
 		if (isCallExpression(node.base)) {
 			args.unshift(`${functionName}[0]`);
@@ -164,19 +152,17 @@ const GENERATORS = {
 
 
 	ForGenericStatement(node, outerScope) {
-		console.assert(node.iterators.length === 1, 'Only one iterator is assumed. Need to implement more!');
-		let { scope, scopeDef } = extendScope(outerScope);
-		let iterator = scoped(node.iterators[0], outerScope);
-		let body = this.Chunk(node, scope);
+		const { scope, scopeDef } = extendScope(outerScope);
+		const iterators = parseExpressionList(node.iterators, outerScope).join(', ');
+		const body = this.Chunk(node, scope);
 
-		let variables = node.variables.map((variable, index) => {
-			let name = generate(variable, scope);
+		const variables = node.variables.map((variable, index) => {
+			const name = generate(variable, scope);
 			return `$setLocal($, '${name}', __star_tmp[${index}])`;
 		}).join(';\n');
 
-		let defs = scopeDef.split(', ');
-		return `${defs[0]};\n[$${scope}._iterator, $${scope}._table, $${scope}._next] = ${iterator};\nwhile((__star_tmp = __star_call($${scope}._iterator, $${scope}._table, $${scope}._next)),__star_tmp[0] !== undefined) {\nlet ${defs[1]}\$${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
-
+		const defs = scopeDef.split(', ');
+		return `${defs[0]};\n[$${scope}._iterator, $${scope}._table, $${scope}._next] = [${iterators}];\nwhile((__star_tmp = __star_call($${scope}._iterator, $${scope}._table, $${scope}._next)),__star_tmp[0] !== undefined) {\nlet ${defs[1]}\$${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
 	},
 
 
@@ -262,26 +248,13 @@ const GENERATORS = {
 
 
 	LocalStatement(node, scope) {
-		let canOptimise = true;
 		let assignments = node.variables.map((variable, index) => {
 			let name = generate(variable, scope);
 			return `$setLocal($, '${name}', __star_tmp[${index}])`;
 		}).join(';\n');
 
-		let values = node.init.map((init, index) => {
-			let value = scoped(init, scope);
-			if (isCallExpression(init)) {
-				canOptimise = false;
-				value = `...${value}`;
-			}
-			return value;
-		});
-
-		// if (canOptimise) {
-		// 	return assignments.replace(/__star_tmp\[(\d+)\]/g, (match, index) => values[index]);
-		// } else {
-			return `__star_tmp = [${values.join(', ')}];${assignments}`;
-		// }
+		const values = parseExpressionList(node.init, scope).join(', ');
+		return `__star_tmp = [${values}];${assignments}`;
 	},
 
 
@@ -343,10 +316,7 @@ const GENERATORS = {
 
 
 	ReturnStatement(node, scope) {
-		let args = node.arguments.map(arg => {
-			let result = scoped(arg, scope);
-			return isCallExpression(arg) ? `...${result}` : result;
-		}).join(', ');
+		const args = parseExpressionList(node.arguments, scope).join(', ');
 		return `return [${args}];`;
 	},
 
@@ -358,10 +328,11 @@ const GENERATORS = {
 
 
 	StringLiteral(node) {
-		const raw = node.raw.replace(/\\(\d+)/g, (_, oct) => `\\x0${parseInt(oct, 8).toString(16)}`);
+		let raw = node.raw;
 		if (/^\[\[[^]*]$/m.test(raw)) {
-			return `\`${raw.substr(2, raw.length - 4)}\``;
+			return `\`${raw.substr(2, raw.length - 4).replace(/\\/g, '\\\\')}\``;
 		} else {
+			raw = raw.replace(/([^\\])\\(\d{1,3})/g, (_, pre, dec) => `${pre}\\u${('000' + parseInt(dec, 10).toString(16)).substr(-4)}`);
 			return raw;
 		}
 	},
@@ -383,7 +354,14 @@ const GENERATORS = {
 
 
 	TableConstructorExpression(node, scope) {
-		let fields = node.fields.map(field => generate(field, scope)).join(';\n');
+		let fields = node.fields.map((field, index, arr) => {
+			if (field.type == 'TableValue') {
+				const isLastItem = index === arr.length - 1;
+				return this.TableValue(field, scope, isLastItem);
+			}
+			return generate(field, scope);
+		}).join(';\n');
+
 		return `new __star_T(t => {${fields}})`;
 	},
 
@@ -402,10 +380,12 @@ const GENERATORS = {
 	},
 
 
-	TableValue(node, scope) {
+	TableValue(node, scope, isLastItem) {
 		let value = scoped(node.value, scope);
-		let operator = isCallExpression(node.value) ? '...' : '';
-		return `Tins(t, ${operator}${value})`;
+		if (isCallExpression(node.value)) {
+			value = isLastItem ? `...${value}` : `${value}[0]`;
+		}
+		return `Tins(t, ${value})`;
 	},
 
 
@@ -437,9 +417,24 @@ const GENERATORS = {
 		let body = this.Chunk(node, scope);
 
 		return `while(${condition}) {\n${scopeDef}\n${body}\n}`;
-	}
-}
+	},
 
+};
+
+
+
+function parseExpressionList(expressionNodeArray, scope) {
+	return expressionNodeArray.map((node, index, arr) => {
+		let value = scoped(node, scope);
+		if (isCallExpression(node)) {
+			if (index == arr.length - 1) {
+				return `...${value}`;
+			}
+			return `${value}[0]`;
+		}
+		return value;
+	});
+}
 
 
 function extendScope(outerIndex) {

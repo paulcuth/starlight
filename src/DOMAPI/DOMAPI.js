@@ -72,6 +72,45 @@
 				}
 
 				obj[key] = luaToJS(val);
+			},
+
+
+			__pairs: function (t) {
+				var keys = Object.keys(obj);
+				for (i = 0, l = keys.length; i < l; i++) {
+					if (!isNaN(+keys[i])) {
+						keys[i]++;
+					}
+				}
+				var iterator = function (t, key) {
+					if (key === undefined) {
+						key = keys[0];
+					} else {
+						key = keys[keys.indexOf(key) + 1];
+					}
+					if (key === undefined) {
+						return;
+					} else if (isNaN(+key)) {
+						return [key, obj[key]];
+					} else {
+						return [key, obj[key - 1]];
+					}
+				};
+				return [iterator, t];
+			},
+
+
+			__ipairs: function (t) {
+				var iterator = function (t, key) {
+					if (!(obj instanceof Array)) {
+						return;
+					}
+					if (key > obj.length) {
+						return;
+					}
+					return [key + 1, obj[key]];
+				};
+				return [iterator, t, 0];
 			}
 
 		});
@@ -110,7 +149,7 @@
 
 			for (i in strValues) {
 				if (strValues.hasOwnProperty(i)) {
-					result[i] = (val[i] instanceof T)? luaToJS(val[i]) : val[i];
+					result[i] = (strValues[i] instanceof T)? luaToJS(strValues[i]) : strValues[i];
 				}
 			}
 			
