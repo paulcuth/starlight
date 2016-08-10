@@ -35,6 +35,7 @@
     "gruntplugin"
   ],
   "dependencies": {
-    "luaparse": "^0.2.0"
+    "luaparse": "^0.2.0",
+    "vlq": "^0.2.1"
   }
 }

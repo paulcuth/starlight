@@ -1,5 +1,6 @@
 import { default as MemExpr } from './MemExpr';
 
+
 var Symbol = Symbol || { iterator: function () {} }; // Needed to get Babel to work in Node 
 
 
@@ -109,8 +110,11 @@ const GENERATORS = {
 
 
 	Chunk(node, scope) {
-		let output = node.body.map(statement => generate(statement, scope) + ';');
-		return output.join('\n');
+		const location = node.loc;
+		const code = [];
+
+		node.body.forEach(statement => code.push(generate(statement, scope), ';\n'));
+		return { location, code };
 	},
 
 
@@ -210,7 +214,10 @@ const GENERATORS = {
 
 
 	Identifier(node, scope) {
-		return node.name;
+		return {
+			location: node.loc,
+			code: [node.name],
+		};
 	},
 
 
@@ -329,28 +336,36 @@ const GENERATORS = {
 
 
 	StringLiteral(node) {
-		let raw = node.raw;
+		const { raw, loc } = node;
+		let code;
+
 		if (/^\[\[[^]*]$/m.test(raw)) {
-			return `\`${raw.substr(2, raw.length - 4).replace(/\\/g, '\\\\')}\``;
+			code = [`\`${raw.substr(2, raw.length - 4).replace(/\\/g, '\\\\')}\``];
 		} else {
-			raw = raw.replace(/([^\\])\\(\d{1,3})/g, (_, pre, dec) => `${pre}\\u${('000' + parseInt(dec, 10).toString(16)).substr(-4)}`);
-			return raw;
+			code = [raw.replace(/([^\\])\\(\d{1,3})/g, (_, pre, dec) => `${pre}\\u${('000' + parseInt(dec, 10).toString(16)).substr(-4)}`)];
 		}
+
+		return { code, location: loc };
 	},
 
 
 	TableCallExpression(node, scope) {
-		let functionName = scoped(node.base, scope);
-		let args = [generate(node.arguments, scope)];
+		const location = node.loc;
+		const functionName = scoped(node.base, scope);
+		const args = generate(node.arguments, scope);
+		let code;
 
 		if (isCallExpression(node.base)) {
-			return `__star_call(${functionName}[0],${args})`;
+			code = ['__star_call(', functionName, '[0],', args, ')'];
+
 		} else {
 			if (functionName instanceof MemExpr && node.base.indexer === ':') {
 				args.unshift(functionName.base);
 			}
-			return `__star_call(${functionName},${args})`;
+			code = ['__star_call(', functionName, ',', args, ')'];
 		}
+
+		return { code, location };
 	},
 
 
@@ -446,8 +461,11 @@ function extendScope(outerIndex) {
 
 
 function scoped(node, scope) {
-	let value = generate(node, scope);
-	return node.type === 'Identifier' ? `$get($, '${value}')` : value;
+	const value = generate(node, scope);
+	return {
+		location: node.loc,
+		code: node.type === 'Identifier' ? ['$get($, \'', value, '\')'] : value,
+	};
 }
 
 
@@ -468,12 +486,17 @@ function generate(ast, scope) {
 }
 
 
+export function generateTree(ast) {
+	return generate(ast, 0);
+}
+
+
 export function getRuntimeInit() {
-	let init = '"use strict"; if (typeof global === \'undefined\' && typeof window !== \'undefined\') { window.global = window; }\n';
-	init += 'let __star = global.starlight.runtime, $0 = __star.globalScope, $ = $0, __star_tmp;\n';
+	let init = '"use strict"; if (typeof global === \'undefined\' && typeof window !== \'undefined\') { window.global = window; }';
+	init += 'let __star = global.starlight.runtime, $0 = __star.globalScope, $ = $0, __star_tmp;';
 	init += 'let __star_call = __star.call, __star_T = __star.T, __star_op_bool = __star.op.bool;';
 	init += 'let __star_op_unm = __star.op.unm, __star_op_not = __star.op.not, __star_op_len = __star.op.len, __star_op_concat = __star.op.concat, __star_op_add = __star.op.add, __star_op_sub = __star.op.sub, __star_op_mul = __star.op.mul, __star_op_div = __star.op.div, __star_op_mod = __star.op.mod, __star_op_eq = __star.op.eq, __star_op_neq = __star.op.neq, __star_op_lt = __star.op.lt, __star_op_gt = __star.op.gt, __star_op_lte = __star.op.lte, __star_op_gte = __star.op.gte, __star_op_pow = __star.op.pow;';
-	init += 'let __star_op_and = __star.op.and, __star_op_or = __star.op.or;\n';
+	init += 'let __star_op_and = __star.op.and, __star_op_or = __star.op.or;';
 	
 	init += 'let Tget, Tset, Tins, $get, $set, $setLocal, __star_shift;';
 
@@ -483,13 +506,8 @@ export function getRuntimeInit() {
 	init += 'Tget = bind(Tproto.get), Tset = bind(Tproto.set), Tins = bind(Tproto.insert);';
 	init += '$get = bind($proto.get), $set = bind($proto.set), $setLocal = bind($proto.setLocal);';
 	init += '__star_shift = bind(Array.prototype.shift);';
-	init += '})();'
+	init += '})();\n'
 
 	return init;
-}
-
-
-export function generateJS(ast) {
-	return generate(ast, 0);
 }
 
