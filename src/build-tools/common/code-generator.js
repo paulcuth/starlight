@@ -153,8 +153,9 @@ const GENERATORS = {
 
 	ForGenericStatement(node, outerScope) {
 		const { scope, scopeDef } = extendScope(outerScope);
+		const { scope: iterationScope, scopeDef: iterationScopeDef } = extendScope(scope);
 		const iterators = parseExpressionList(node.iterators, outerScope).join(', ');
-		const body = this.Chunk(node, scope);
+		const body = this.Chunk(node, iterationScope);
 
 		const variables = node.variables.map((variable, index) => {
 			const name = generate(variable, scope);
@@ -162,7 +163,7 @@ const GENERATORS = {
 		}).join(';\n');
 
 		const defs = scopeDef.split(', ');
-		return `${defs[0]};\n[$${scope}._iterator, $${scope}._table, $${scope}._next] = [${iterators}];\nwhile((__star_tmp = __star_call($${scope}._iterator, $${scope}._table, $${scope}._next)),__star_tmp[0] !== undefined) {\nlet ${defs[1]}\$${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
+		return `${defs[0]};\n[$${scope}._iterator, $${scope}._table, $${scope}._next] = [${iterators}];\nwhile((__star_tmp = __star_call($${scope}._iterator, $${scope}._table, $${scope}._next)),__star_tmp[0] !== undefined) {\n${iterationScopeDef}\$${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
 	},
 
 
