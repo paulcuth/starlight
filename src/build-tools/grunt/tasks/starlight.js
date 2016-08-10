@@ -68,10 +68,11 @@ module.exports = function(grunt) {
       var start = "require'" + mainFilename + "'\n";
       var ast = parser.parse(src + start);
       var js = generateJS(ast);
+      var runtimeInit = getRuntimeInit();
+      js = ';(()=>{' + runtimeInit + js + '})();';
 
       // Write the destination file.
-      var runtimeInit = getRuntimeInit();
-      grunt.file.write(f.dest, runtimeInit + js);
+      grunt.file.write(f.dest, js);
 
       // Print a success message.
       grunt.log.writeln('File "' + f.dest + '" created.');

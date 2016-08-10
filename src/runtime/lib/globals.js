@@ -255,9 +255,10 @@ export function _require(modname) {
 		throw new LuaError(`module '${modname}' not found:\n\tno field package.preload['${modname}']`);
 	}
 
-	mod = modinit(modname)[0];
-	loaded.rawset(modname, mod !== void 0 ? mod : true);
+	let modResult = modinit(modname);
+	mod = (modResult instanceof Array) ? modResult[0] : modResult;
 
+	loaded.rawset(modname, mod !== void 0 ? mod : true);
  	return mod;
 }
 

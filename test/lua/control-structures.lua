@@ -39,6 +39,21 @@ assertTrue (a == 5, 'For loop should iterate the correct number of times')
 assertTrue (b == 15, 'For loop variable should hold the value of the current iteration')
 
 
+local funcs = {}
+local b = ''
+
+for i = 1, 3 do
+	table.insert(funcs, function () b = b..i end)
+end
+
+funcs[1]()
+funcs[2]()
+funcs[3]()
+assertTrue (b == '123', 'Each loop of numeric for should maintain its own scope')	
+
+
+
+
 a = { a = 1, b = 2 }
 b = 0
 
@@ -124,7 +139,20 @@ for x,y,z in iter, {4,5,6}, 0 do
 end
 assertTrue (a == '[1,4,8][2,5,10][3,6,12]', 'Generic for loop should pass all values returned from iterator to the variables in the loop')	
 
-	
+
+local funcs = {}
+local a = {1,2,3}
+local b = ''
+
+for _, i in ipairs(a) do
+	table.insert(funcs, function () b = b..i end)
+end
+
+funcs[1]()
+funcs[2]()
+funcs[3]()
+assertTrue (b == '123', 'Each loop of generic for should maintain its own scope')	
+
 
 a = ''
 b = 1
@@ -162,6 +190,21 @@ while i < 4 do
 	break
 end
 assertTrue (b == '1', 'Break should exit while loop')
+
+
+local funcs = {}
+local b = ''
+i = 1
+
+while i < 4 do
+	table.insert(funcs, function () b = b..i end)
+	i = i + 1
+end
+
+funcs[1]()
+funcs[2]()
+funcs[3]()
+assertTrue (b == '444', 'Each loop of while should not maintain its own scope')	
 
 
 
@@ -202,6 +245,21 @@ repeat
 	break
 until i == 4
 assertTrue (b == '1', 'Break should exit repeat loop')
+
+
+local funcs = {}
+local b = ''
+i = 1
+
+repeat
+	table.insert(funcs, function () b = b..i end)
+	i = i + 1
+until i == 4
+
+funcs[1]()
+funcs[2]()
+funcs[3]()
+assertTrue (b == '444', 'Each loop of repeat should not maintain its own scope')	
 
 
 a = ':'
