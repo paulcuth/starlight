@@ -16,6 +16,7 @@ import {
 const ROSETTA_STONE = {
 	'([^a-zA-Z0-9%(])-': '$1*?',
 	'([^%])-([^a-zA-Z0-9?])': '$1*?$2',
+	'([^%])\\.': '$1[\\s\\S]',
 	'(.)-$': '$1*?',
 	'%a': '[a-zA-Z]',
 	'%A': '[^a-zA-Z]',
@@ -35,7 +36,7 @@ const ROSETTA_STONE = {
 	'%W': '[^a-zA-Z0-9]',
 	'%x': '[a-fA-F0-9]',
 	'%X': '[^a-fA-F0-9]',
-	'%([^a-zA-Z])': '\\$1'
+	'%([^a-zA-Z])': '\\$1',
 };
 
 
@@ -52,29 +53,31 @@ function translatePattern (pattern) {
 		}
 	}
 
- 	let l = pattern.length;
-	let n = 0;
+	let nestingLevel = 0;
 
-	for (let i = 0; i < l; i++) {
-		const character = pattern.substr(i, 1);
+	for (let i = 0, l = pattern.length; i < l; i++) {
 		if (i && pattern.substr(i - 1, 1) == '\\') {
 			continue;
 		}
 
-		let addSlash = false;
+		// Remove nested square brackets caused by substitutions
+		const character = pattern.substr(i, 1);
+		let isToBeRemoved = false;
 
 		if (character == '[') {
-			if (n) addSlash = true;
-			n++;
-
-		} else if (character == ']' && pattern.substr(i - 1, 1) !== '\\') {
-			n--;
-			if (n) addSlash = true;
+			if (nestingLevel++ > 0) {
+				isToBeRemoved = true;
+			}
+		} else if (character == ']') {
+			if (--nestingLevel > 0) {
+				isToBeRemoved = true;
+			}
 		}
 
-		if (addSlash) {
-			pattern = pattern.substr(0, i) + pattern.substr(i++ + 1);
-			l++;
+		if (isToBeRemoved) {
+			pattern = pattern.substr(0, i) + pattern.substr(i + 1);
+			i--;
+			l--;
 		}
 	}		
 

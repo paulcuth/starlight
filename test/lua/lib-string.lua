@@ -126,6 +126,10 @@ assertEqual (e, 'i', 'string.find() should return the groups that are specified 
 b = string.find('[', '[_%w]')
 assertTrue (b == nil, 'string.find() should not return the location of special syntax [ and ].')
 
+local a = [[The quick
+brown fox]]
+b = string.find(a, 'The .* fox')
+assertTrue (b == 1, 'The dot pattern should match across lines in string.find()')
 
 
 
