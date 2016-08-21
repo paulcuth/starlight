@@ -138,20 +138,23 @@ const GENERATORS = {
 
 
 	ForNumericStatement(node, outerScope) {
-		let { scope, scopeDef } = extendScope(outerScope);
-		let variableName = generate(node.variable, outerScope);
-		let start = scoped(node.start, outerScope);
-		let end = scoped(node.end, outerScope);
-		let step = node.step === null ? 1 : generate(node.step, outerScope);
-		let operator = step > 0 ? '<=' : '>=';
-		let body = this.Chunk(node, scope);
-		let loopIndex = ++forLoopIndex;
+		const { scope, scopeDef } = extendScope(outerScope);
+		const variableName = generate(node.variable, outerScope);
+		const start = scoped(node.start, outerScope);
+		const end = scoped(node.end, outerScope);
+		const step = node.step === null ? '1' : generate(node.step, outerScope);
+		const operator = step > 0 ? '<=' : '>=';
+		const body = this.Chunk(node, scope);
+		const loopIndex = ++forLoopIndex;
+		const location = node.loc;
 
-		let init = `$${outerScope}._forLoop${loopIndex} = ${start}`;
-		let cond = `$${outerScope}._forLoop${loopIndex} ${operator} ${end}`;
-		let after = `$${outerScope}._forLoop${loopIndex} += ${step}`;
-		let varInit = `$${scope}.setLocal('${variableName}',$${outerScope}._forLoop${loopIndex});`;
-		return `for (${init}; ${cond}; ${after}) {\n${scopeDef}\n${varInit}\n${body}\n}`;
+		const init = [`$${outerScope}._forLoop${loopIndex} = `, start];
+		const cond = [`$${outerScope}._forLoop${loopIndex} ${operator} `, end];
+		const after = [`$${outerScope}._forLoop${loopIndex} += `, step];
+		const varInit = [`$${scope}.setLocal('`, variableName, `',$${outerScope}._forLoop${loopIndex});`];
+		const code = ['for (', ...init, '; ', ...cond, '; ', ...after, ') {\n', scopeDef, '\n', ...varInit, '\n', body, '\n}'];
+
+		return { code, location };
 	},
 
 
@@ -215,8 +218,8 @@ const GENERATORS = {
 
 	Identifier(node, scope) {
 		return {
-			location: node.loc,
 			code: [node.name],
+			location: node.loc,
 		};
 	},
 
@@ -303,14 +306,20 @@ const GENERATORS = {
 		return new MemExpr(base, `'${identifier}'`);
 	},
 
-
+	//
 	NilLiteral(node) {
-		return 'undefined';
+		return {
+			code: ['undefined'],
+			location: node.loc,
+		};
 	},
 
-
+	//
 	NumericLiteral(node) {
-		return node.value.toString();
+		return { 
+			code: [node.value.toString()],
+			location: node.loc,
+		};
 	},
 
 
@@ -328,15 +337,15 @@ const GENERATORS = {
 		return `return [${args}];`;
 	},
 
-
+	//
 	StringCallExpression(node, scope) {
 		node.arguments = node.argument;
 		return this.TableCallExpression(node, scope);
 	},
 
-
+	//
 	StringLiteral(node) {
-		const { raw, loc } = node;
+		const { raw, loc: location } = node;
 		let code;
 
 		if (/^\[\[[^]*]$/m.test(raw)) {
@@ -345,10 +354,10 @@ const GENERATORS = {
 			code = [raw.replace(/([^\\])\\(\d{1,3})/g, (_, pre, dec) => `${pre}\\u${('000' + parseInt(dec, 10).toString(16)).substr(-4)}`)];
 		}
 
-		return { code, location: loc };
+		return { code, location };
 	},
 
-
+	//
 	TableCallExpression(node, scope) {
 		const location = node.loc;
 		const functionName = scoped(node.base, scope);
@@ -421,9 +430,12 @@ const GENERATORS = {
 		return `__star_op_${operator}(${argument})`;
 	},
 
-	
+	//
 	VarargLiteral(node) {
-		return '...$.getVarargs()';
+		return {
+			code: ['...$.getVarargs()'],
+			location: node.loc,
+		};
 	},
 
 
@@ -432,11 +444,29 @@ const GENERATORS = {
 		let condition = scoped(node.condition, outerScope);
 		let body = this.Chunk(node, scope);
 
-		return `while(${condition}) {\n${scopeDef}\n${body}\n}`;
+		const code = ['while(', condition, ') {\n', scopeDef, '\n', body, '\n}'];
+		const location = noe.loc;  
+		return { code, location };
 	},
 
 };
 
+
+// TODO: Remove
+Object.keys(GENERATORS).forEach(key => {
+	const handler = GENERATORS[key];
+	GENERATORS[key] = (...args) => {
+		const result = handler.call(GENERATORS, ...args);
+		if (
+			typeof result !== 'object'
+			|| !result.code
+			|| !result.location
+		){
+			throw new Error('DOES NOT RETURN SOURCE MAP: ' + key);
+		}
+		return result;
+	}
+});
 
 
 function parseExpressionList(expressionNodeArray, scope) {
@@ -463,8 +493,8 @@ function extendScope(outerIndex) {
 function scoped(node, scope) {
 	const value = generate(node, scope);
 	return {
+		code: node.type === 'Identifier' ? ['$get($, \'', value, '\')'] : [value],
 		location: node.loc,
-		code: node.type === 'Identifier' ? ['$get($, \'', value, '\')'] : value,
 	};
 }
 
