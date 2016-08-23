@@ -1,6 +1,6 @@
-import { default as T } from '../Table';
-import { default as LuaError } from '../LuaError';
-import { default as stringLib, metatable as stringMetatable } from './string';
+import T from '../Table';
+import LuaError from '../LuaError';
+import stringLib, { metatable as stringMetatable } from './string';
 import { getn } from './table';
 
 import { 

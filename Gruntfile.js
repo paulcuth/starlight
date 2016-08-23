@@ -6,7 +6,7 @@ module.exports = function(grunt) {
 		starlight: {
 			test: {
 				src: 'test/lua/**/*.lua',
-				dest: 'dist/test/test.lua.js',
+				dest: 'dist/test/test.lua.es6.js',
 				options: {
 					main: 'test-runner.lua',
 					basePath: 'test/lua'
@@ -69,7 +69,9 @@ module.exports = function(grunt) {
 				]
 			},
 			test: {
-				src: 'dist/test/test.lua.js',
+				sourceMap: true,
+				inputSourceMap: grunt.file.readJSON('dist/test/test.lua.es6.js.map'),
+				src: 'dist/test/test.lua.es6.js',
 				dest: 'dist/test/test.lua.js'
 			},
 			parser: {
@@ -136,6 +138,11 @@ module.exports = function(grunt) {
 				}
 			},
 			test: {
+				options: {
+					browserifyOptions: {
+						debug: true
+					}
+				},
 				files: {
 					'dist/test/test.lua.js': ['dist/test/test.lua.js'],
 				}
@@ -151,7 +158,7 @@ module.exports = function(grunt) {
 
 	grunt.registerTask('grunt-plugin', ['copy:grunt-plugin', 'babel:grunt-plugin-common', 'copy:grunt-plugin-module']);
 	grunt.registerTask('runtime', ['babel:runtime', 'browserify:runtime', 'uglify:runtime']);
-	grunt.registerTask('test', ['starlight:test', 'babel:test', 'browserify:test', 'uglify:test', 'copy:test']);
+	grunt.registerTask('test', ['starlight:test', 'babel:test', 'browserify:test', /* 'uglify:test', */ 'copy:test']);
 	grunt.registerTask('parser', ['babel:parser', 'babel:parser-codegen', 'browserify:parser', 'uglify:parser', 'uglify:babel']);
 	grunt.registerTask('browser-lib', ['babel:runtime', 'browserify:runtime', 'babel:parser', 'babel:parser-codegen', 'browserify:parser', 'concat:browser-lib', 'uglify:browser-lib', 'copy:browser-lib']);
 

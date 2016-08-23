@@ -29,16 +29,6 @@ function parseFile(filePath, content, options) {
 }
 
 
-function getModulePrefixCode(modname) {
-  return "__star_call($get($, 'rawset'), Tget($get($, 'package'), 'preload'), '" + modname + "', (__star_tmp = function (...args) { let $1 = $0.extend(), $ = $1; $.setVarargs(args);\n";
-}
-
-
-function getModuleSuffixCode(modname) {
-  return "}, __star_tmp.toString = () => 'function: [preloaded: " + modname + "]', __star_tmp));\n";
-}
-
-
 module.exports = function(grunt) {
   // Please see the Grunt documentation for more information regarding task
   // creation: http://gruntjs.com/creating-tasks
@@ -57,7 +47,7 @@ module.exports = function(grunt) {
       const sourceMapper = new SourceMapper({
         bootstrap: {
           filename: 'starlight.js',
-          content: '-- Starlight runtime',
+          content: '-- Starlight bootstrap code',
         },
       });
 
@@ -86,10 +76,16 @@ module.exports = function(grunt) {
           });
 
           // Push file to source mapper
-          const tree = codeGen.generateTree(file.ast);
-          sourceMapper.pushBootstrap(getModulePrefixCode(file.modPath));
+
+          const modname = file.modPath;
+          const { scope, scopeDef } = codeGen.extendScope(0);
+          const moduleBootstrapPrefix = `__star_call($get($, 'rawset'), Tget($get($, 'package'), 'preload'), '${modname}', (__star_tmp = function (...args) { ${scopeDef} $.setVarargs(args);\n`;
+          const moduleBootstrapSuffix = `;return [];}, __star_tmp.toString = () => 'function: [preloaded: ${modname}]', __star_tmp));\n`;
+          const tree = codeGen.generateTree(file.ast, scope);
+
+          sourceMapper.pushBootstrap(moduleBootstrapPrefix);
           sourceMapper.pushTree({ tree, filename });
-          sourceMapper.pushBootstrap(getModuleSuffixCode(file.modPath));
+          sourceMapper.pushBootstrap(moduleBootstrapSuffix);
         });
 
 
@@ -110,12 +106,16 @@ module.exports = function(grunt) {
 
       // Write output and source map files
       const { output, sourceMap } = sourceMapper.render({ outputFilename: f.dest });
-      grunt.file.write(f.dest, `;(()=>{${output}})();`);
-      grunt.file.write(`${f.dest}.map`, sourceMap);
+      const outputWritten = grunt.file.write(f.dest, `;(()=>{${output}})();\n//# sourceMappingURL=${path.basename(f.dest)}.map`);
+      const mapWritten = grunt.file.write(`${f.dest}.map`, sourceMap);
 
       // Print a success message.
-      grunt.log.writeln(`File "${f.dest}" created.`);
-      grunt.log.writeln(`File "${f.dest}.map" created.`);
+      if (outputWritten) {
+        grunt.log.writeln(`File "${f.dest}" created.`);
+      }
+      if (mapWritten) {
+        grunt.log.writeln(`File "${f.dest}.map" created.`);
+      }
 
     });
   });

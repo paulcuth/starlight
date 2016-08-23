@@ -1,5 +1,5 @@
-import { getRuntimeInit, generateJS } from './code-generator';
-import { default as parser } from 'luaparse';
+import * as codeGen from './code-generator';
+import parser from 'luaparse';
 import superagent from 'superagent';
 
 
@@ -15,9 +15,10 @@ const SUPPORTED_MIME_TYPES = [
 ];
 
 function parseToString (input) {
-	let ast = parser.parse(input);
-	let js = getRuntimeInit() + generateJS(ast);
-	let babel = global.babel;
+	const babel = global.babel;
+	const ast = parser.parse(input);
+	const tree = codeGen.generateTree(ast);
+	let js = codeGen.getRuntimeInit() + codeGen.generateJS(tree);
 
 	if (babel) {
 		js = `()=>{${js}}`;

@@ -1,4 +1,4 @@
-import { default as T } from '../Table';
+import T from '../Table';
 
 
 export default new T({

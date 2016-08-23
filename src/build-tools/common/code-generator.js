@@ -35,37 +35,57 @@ const BIN_OP_MAP = {
 const GENERATORS = {
 
 	AssignmentStatement(node, scope) {
-		let assignments = node.variables.map((variable, index) => {
+		const assignments = node.variables.reduce((result, variable, index) => {
 			const name = scoped(variable, scope);
 
-			if (name instanceof MemExpr) {
-				return name.set(`__star_tmp[${index}]`);
+			if (name.code[0] instanceof MemExpr) {
+				name.code[0].set(`__star_tmp[${index}]`);
+				// result.push(name);
+
 			} else {
-				const [match, args] = [].concat(name.match(/^\$get\((.*)\)$/));
-				if (!match) {
-					throw new Error('Unhandled'); 
-				}
+// console.log('\n\n\n',variable)
+				// let root = name;
+				// while (typeof root.code[0] !== 'string') {
+				// 	root = root.code
+				// }
 
-				return `$set(${args}, __star_tmp[${index}])`;
+				// if (name.code[0] !== '$get($, \'') {
+				// 	throw new Error('Unhandled'); 					
+				// }
+
+				// name.code = ['$set($, \'', name.code[1], `\', __star_tmp[${index}])`]; 
+				name.code[0] = '$set($, \'';
+				name.code[name.code.length - 1] = `\', __star_tmp[${index}]);`; 
+				// const [match, args] = [].concat(name.toString().match(/^\$get\((.*)\)$/));
+				// if (!match) {
+				// 	throw new Error('Unhandled'); 
+				// }
+
+				// return `$set(${args}, __star_tmp[${index}])`;
 			}
-		}).join(';\n');
 
-		const values = parseExpressionList(node.init, scope).join(', ');
-		return `__star_tmp = [${values}];${assignments}`;
+			result.push(name);
+			return result;
+		}, []);
+
+		const values = parseExpressionList(node.init, scope);
+		const code = ['__star_tmp = [', ...values, '];', ...assignments];
+		const location = node.loc;
+		return { code, location };
 	},
 
 
 	BinaryExpression(node, scope) {
-		let left = scoped(node.left, scope);
-		let right = scoped(node.right, scope);
-		let operator = BIN_OP_MAP[node.operator];
+		const left = scoped(node.left, scope);
+		const right = scoped(node.right, scope);
+		const operator = BIN_OP_MAP[node.operator];
 
 		if (isCallExpression(node.left)) {
-			left += '[0]';
+			left.code.push('[0]');
 		}
 
 		if (isCallExpression(node.right)) {
-			right += '[0]';
+			right.code.push('[0]');
 		}
 
 		if (!operator) {
@@ -73,17 +93,25 @@ const GENERATORS = {
 			throw new Error(`Unhandled binary operator: ${node.operator}`);
 		}
 
-		return `__star_op_${operator}(${left}, ${right})`;
+		const code = ['__star_op_', operator, '(', left, ', ', right, ')'];
+		const location = node.loc;
+		return { code, location };
 	},
 
 
 	BooleanLiteral(node) {
-		return node.value ? 'true' : 'false';
+		return {
+			code: [node.value ? 'true' : 'false'],
+			location: node.loc,
+		};
 	},
 
 
 	BreakStatement(node) {
-		return 'break';
+		return {
+			code: ['break'],
+			location: node.loc,
+		};
 	},
 
 
@@ -93,19 +121,27 @@ const GENERATORS = {
 
 
 	CallExpression(node, scope) {
-		let functionName = scoped(node.base, scope);
+		const functionName = scoped(node.base, scope);
 		const args = parseExpressionList(node.arguments, scope);
+		const head = [];
 
 		if (isCallExpression(node.base)) {
-			args.unshift(`${functionName}[0]`);
+			head.unshift(functionName, `[0]`, ', ');
+
 		} else {
-			if (functionName instanceof MemExpr && node.base.indexer === ':') {
-				args.unshift(functionName.base);
+			if (functionName.code[0] instanceof MemExpr && node.base.indexer === ':') {
+				head.unshift(functionName.code[0].base, ', ');
 			}
-			args.unshift(`${functionName}`);
+			head.unshift(functionName, ', ');
 		}
 
-		return `__star_call(${args})`;
+		if (args.length === 0) {
+			head.pop();
+		}
+
+		const code = ['__star_call(', ...head, ...args, ')'];
+		const location = node.loc;
+		return { code, location };
 	},
 
 
@@ -113,22 +149,27 @@ const GENERATORS = {
 		const location = node.loc;
 		const code = [];
 
-		node.body.forEach(statement => code.push(generate(statement, scope), ';\n'));
+		node.body.forEach(statement => code.push(generate(statement, scope), '\n'));
 		return { location, code };
 	},
 
 
 	DoStatement(node, outerScope) {
 		let { scope, scopeDef } = extendScope(outerScope);
-		let body = this.Chunk(node, scope);
+		const body = this.Chunk(node, scope);
 		scopeDef = scopeDef.replace(',', ';');
-		return `${scopeDef}\n${body}\n$=$${outerScope};`;
+
+		const code = [scopeDef, '\n', body, `\n$=$${outerScope};`];
+		const location = node.loc;
+		return { code, location };
 	},
 
 
 	ElseClause(node, scope) {
-		let body = this.Chunk(node, scope);
-		return `{\n${body}\n}`;
+		const body = this.Chunk(node, scope);
+		const code = ['{\n', body, '\n}'];
+		const location = node.loc;
+		return { code, location };
 	},
 
 
@@ -153,7 +194,6 @@ const GENERATORS = {
 		const after = [`$${outerScope}._forLoop${loopIndex} += `, step];
 		const varInit = [`$${scope}.setLocal('`, variableName, `',$${outerScope}._forLoop${loopIndex});`];
 		const code = ['for (', ...init, '; ', ...cond, '; ', ...after, ') {\n', scopeDef, '\n', ...varInit, '\n', body, '\n}'];
-
 		return { code, location };
 	},
 
@@ -161,58 +201,88 @@ const GENERATORS = {
 	ForGenericStatement(node, outerScope) {
 		const { scope, scopeDef } = extendScope(outerScope);
 		const { scope: iterationScope, scopeDef: iterationScopeDef } = extendScope(scope);
-		const iterators = parseExpressionList(node.iterators, outerScope).join(', ');
+		const iterators = parseExpressionList(node.iterators, outerScope);
 		const body = this.Chunk(node, iterationScope);
+		const location = node.loc;
 
-		const variables = node.variables.map((variable, index) => {
+		const variables = node.variables.reduce((result, variable, index) => {
 			const name = generate(variable, scope);
-			return `$setLocal($, '${name}', __star_tmp[${index}])`;
-		}).join(';\n');
+			result.push("$setLocal($, '", name, `', __star_tmp[${index}]);`);
+			return result;
+		}, []);
 
 		const defs = scopeDef.split(', ');
-		return `${defs[0]};\n[$${scope}._iterator, $${scope}._table, $${scope}._next] = [${iterators}];\nwhile((__star_tmp = __star_call($${scope}._iterator, $${scope}._table, $${scope}._next)),__star_tmp[0] !== undefined) {\n${iterationScopeDef}\$${scope}._next = __star_tmp[0]\n${variables}\n${body}\n}`;
+		const code = [`${defs[0]};\n[$${scope}._iterator, $${scope}._table, $${scope}._next] = [`, ...iterators, `];\nwhile((__star_tmp = __star_call($${scope}._iterator, $${scope}._table, $${scope}._next)),__star_tmp[0] !== undefined) {\n${iterationScopeDef}\$${scope}._next = __star_tmp[0]\n`, ...variables, '\n', body, '\n}'];
+
+		return { code, location };
 	},
 
 
 	FunctionDeclaration(node, outerScope) {
-		let { scope, scopeDef } = extendScope(outerScope);
-		let isAnonymous = !node.identifier;
-		let identifier = isAnonymous ? '' : generate(node.identifier, outerScope);
-		let isMemberExpr = identifier instanceof MemExpr;
+		const { scope, scopeDef } = extendScope(outerScope);
+		const isAnonymous = !node.identifier;
+		const identifier = isAnonymous ? '' : generate(node.identifier, outerScope);
+		const isMemberExpr = identifier instanceof MemExpr;
 
-		let params = node.parameters.map((param, index) => {
-			let name = generate(param, scope);
-			if (name === '...$.getVarargs()') {
-				return `$.setVarargs(args)`;
+		const params = node.parameters.reduce((result, param, index) => {
+			const name = generate(param, scope);
+			if (name.code.toString() === '...$.getVarargs()') {
+				result.push('$.setVarargs(args);\n');
 			} else {
-				return `$setLocal($, '${name}', __star_shift(args))`;
+				result.push("$setLocal($, '", name, "', __star_shift(args));\n");
 			}
-		});
+
+			return result;
+		}, []);
 
 		let name;
 		if (isMemberExpr) {
-			name = identifier.property.replace(/'/g, '');
+			name = [...identifier.property];
+			if (name[0] === '\'' && name[name.length - 1] === '\'') {
+				name = name.slice(1, -1);
+			} 
 
 			if (node.identifier.indexer === ':') {
-				params.unshift("$setLocal($, 'self', __star_shift(args))");
+				params.unshift("$setLocal($, 'self', __star_shift(args));");
 			}
 		} else {
 			name = identifier;
 		}
 
-		let paramStr = params.join(';\n');
-		let body = this.Chunk(node, scope);
-		let prefix = isAnonymous? '' : 'func$';
-		let funcDef = `(__star_tmp = function ${prefix}${name}(...args){${scopeDef}\n${paramStr};\n${body} return [];}, __star_tmp.toString=()=>'function: 0x${(++functionIndex).toString(16)}', __star_tmp)`;
+		const body = this.Chunk(node, scope);
+		const doesReturn = node.body.length > 0 && node.body[node.body.length - 1].type === 'ReturnStatement';
+		const prefix = isAnonymous? '' : 'func$';
+		const endLoc = {
+			line: node.loc.end.line,
+			column: node.loc.end.column - 3,
+		};
+		const endNode = {
+			code: [' ', (doesReturn ? '' : 'return [];'), `}, __star_tmp.toString=()=>'function: 0x${(++functionIndex).toString(16)}', __star_tmp)`],
+			location: {
+				start: endLoc,
+				end: node.loc.end, 
+			}
+		}
+		const funcDef = [`(__star_tmp = function ${prefix}`, ...name, `(...args){${scopeDef}\n`, ...params, ';\n', body, endNode];
+		const location = {
+			start: node.loc.start,
+			end: endLoc,
+		}
 
+		let code;
 		if (isAnonymous) {
-			return funcDef;
+			code = funcDef;
+
 		} else if (isMemberExpr) {
-			return identifier.set(funcDef);
+			identifier.set(funcDef);
+			code = identifier.code;
+
 		} else {
 			const local = node.isLocal ? 'Local' : '';
-			return `$set${local}($, '${identifier}', ${funcDef})`;
+			code = [`$set${local}($, '`, identifier, "', ", ...funcDef, ')'];
 		}
+
+		return { code, location };
 	},
 
 
@@ -225,20 +295,29 @@ const GENERATORS = {
 
 
 	IfClause(node, scope) {
-		let condition = scoped(node.condition, scope);
+		const condition = scoped(node.condition, scope);
 
 		if (isCallExpression(node.condition)) {
-			condition += '[0]';
+			condition.code.push('[0]');
 		}
 
-		let body = this.Chunk(node, scope);
-		return `if (__star_op_bool(${condition})) {\n${body}\n}`;
+		const body = this.Chunk(node, scope);
+		const code = ['if (__star_op_bool(', condition, ')) {\n', body, '\n}'];
+		const location = node.loc;
+		return { code, location };
 	},
 
 
 	IfStatement(node, scope) {
-		let clauses = node.clauses.map((clause) => generate(clause, scope));
-		return clauses.join (' else ');
+		const clauses = node.clauses.reduce((result, clause) => {
+			result.push(' else ', generate(clause, scope));
+			return result;
+		}, []);
+
+		return {
+			code: clauses.slice(1),
+			location: node.loc,
+		};
 	},
 
 
@@ -247,66 +326,73 @@ const GENERATORS = {
 		let index = scoped(node.index, scope);
 
 		if (isCallExpression(node.base)) {
-			base += '[0]';
+			base.code.push('[0]');
 		}
 
 		if (isCallExpression(node.index)) {
-			index += '[0]';
+			index.code.push('[0]');
 		}
 
-		return new MemExpr(base, index);
+		return new MemExpr(base, [index], node.loc);
 	},
 
 
 	LocalStatement(node, scope) {
-		let assignments = node.variables.map((variable, index) => {
-			let name = generate(variable, scope);
-			return `$setLocal($, '${name}', __star_tmp[${index}])`;
-		}).join(';\n');
+		const assignments = node.variables.reduce((result, variable, index) => {
+			const name = generate(variable, scope);
+			result.push("$setLocal($, '", name, `', __star_tmp[${index}]);`);
+			return result;
+		}, []);
 
-		const values = parseExpressionList(node.init, scope).join(', ');
-		return `__star_tmp = [${values}];${assignments}`;
+		const values = parseExpressionList(node.init, scope);
+		const code = ['__star_tmp = [', ...values, '];', ...assignments];
+		const location = node.loc;
+		return { code, location };
 	},
 
 
 	LogicalExpression(node, scope) {
-		let left = scoped(node.left, scope);
-		let right = scoped(node.right, scope);
-		let operator = node.operator;
+		const left = scoped(node.left, scope);
+		const right = scoped(node.right, scope);
+		const operator = node.operator;
+		const location = node.loc;
 
 		if (isCallExpression(node.left)) {
-			left += '[0]';
+			left.code.push('[0]');
 		}
 
 		if (isCallExpression(node.right)) {
-			right += '[0]';
+			right.code.push('[0]');
 		}
 
+		let code;
 		if (operator === 'and') {
-			return `(!__star.op.bool(${left})?${left}:${right})`
+			code = ['(!__star.op.bool(', left, ')?', left, ':', right, ')'];
 
 		} else if (operator === 'or') {
-			return `(__star.op.bool(${left})?${left}:${right})`
+			code = ['(__star.op.bool(', left, ')?', left, ':', right, ')'];
 
 		} else {
 			console.info(node);
 			throw new Error(`Unhandled logical operator: ${node.operator}`);
 		}
+
+		return { code, location };
 	},
 
 
 	MemberExpression(node, scope) {
-		let base = scoped(node.base, scope);
-		let identifier = generate(node.identifier, scope);
+		const base = scoped(node.base, scope);
+		const identifier = generate(node.identifier, scope);
 
 		if (isCallExpression(node.base)) {
-			base += '[0]';
+			base.code.push('[0]');
 		}
 
-		return new MemExpr(base, `'${identifier}'`);
+		return new MemExpr(base, ["'", identifier, "'"], node.loc);
 	},
 
-	//
+
 	NilLiteral(node) {
 		return {
 			code: ['undefined'],
@@ -314,7 +400,7 @@ const GENERATORS = {
 		};
 	},
 
-	//
+
 	NumericLiteral(node) {
 		return { 
 			code: [node.value.toString()],
@@ -324,26 +410,31 @@ const GENERATORS = {
 
 
 	RepeatStatement(node, outerScope) {
-		let { scope, scopeDef } = extendScope(outerScope);
-		let condition = scoped(node.condition, outerScope);
-		let body = this.Chunk(node, scope);
+		const { scope, scopeDef } = extendScope(outerScope);
+		const condition = scoped(node.condition, outerScope);
+		const body = this.Chunk(node, scope);
 
-		return `do{\n${scopeDef}\n${body}\n}while(!(${condition}))`;
+		return {
+			code: [`do{\n${scopeDef}\n`, body, '\n}while(!(', condition, '))'],
+			location: node.loc,
+		};
 	},
 
 
 	ReturnStatement(node, scope) {
-		const args = parseExpressionList(node.arguments, scope).join(', ');
-		return `return [${args}];`;
+		const args = parseExpressionList(node.arguments, scope);
+		const code = ['return [', ...args, '];'];
+		const location = node.loc;
+		return { code, location };
 	},
 
-	//
+
 	StringCallExpression(node, scope) {
 		node.arguments = node.argument;
 		return this.TableCallExpression(node, scope);
 	},
 
-	//
+
 	StringLiteral(node) {
 		const { raw, loc: location } = node;
 		let code;
@@ -357,7 +448,7 @@ const GENERATORS = {
 		return { code, location };
 	},
 
-	//
+
 	TableCallExpression(node, scope) {
 		const location = node.loc;
 		const functionName = scoped(node.base, scope);
@@ -368,8 +459,8 @@ const GENERATORS = {
 			code = ['__star_call(', functionName, '[0],', args, ')'];
 
 		} else {
-			if (functionName instanceof MemExpr && node.base.indexer === ':') {
-				args.unshift(functionName.base);
+			if (functionName.code[0] instanceof MemExpr && node.base.indexer === ':') {
+				args.code.unshift(functionName.code[0].base, ',');
 			}
 			code = ['__star_call(', functionName, ',', args, ')'];
 		}
@@ -379,47 +470,61 @@ const GENERATORS = {
 
 
 	TableConstructorExpression(node, scope) {
-		let fields = node.fields.map((field, index, arr) => {
+		const fields = node.fields.reduce((result, field, index, arr) => {
 			if (field.type == 'TableValue') {
 				const isLastItem = index === arr.length - 1;
-				return this.TableValue(field, scope, isLastItem);
+				result.push(this.TableValue(field, scope, isLastItem), ';\n');
+			} else {
+				result.push(generate(field, scope), ';\n');
 			}
-			return generate(field, scope);
-		}).join(';\n');
+			return result;
+		}, []);
 
-		return `new __star_T(t => {${fields}})`;
+		const code = ['new __star_T(t => {\n', ...fields, '})'];
+		const location = node.loc;
+		return { code, location };
 	},
 
 
 	TableKeyString(node, scope) {
-		let name = generate(node.key, scope);
-		let value = scoped(node.value, scope);
-		return `Tset(t, '${name}', ${value})`;
+		const name = generate(node.key, scope);
+		const value = scoped(node.value, scope);
+		const code = ["Tset(t, '", name, "', ", value, ')'];
+		const location = node.loc;
+		return { code, location };
 	},
 
 
 	TableKey(node, scope) {
-		let name = scoped(node.key, scope);
-		let value = scoped(node.value, scope);
-		return `Tset(t, ${name}, ${value})`;
+		const name = scoped(node.key, scope);
+		const value = scoped(node.value, scope);
+		const code = ['Tset(t, ', name, ', ', value, ')'];
+		const location = node.loc;
+		return { code, location };
 	},
 
 
 	TableValue(node, scope, isLastItem) {
+		const location = node.loc;
 		let value = scoped(node.value, scope);
+
 		if (isCallExpression(node.value)) {
-			value = isLastItem ? `...${value}` : `${value}[0]`;
+			value = isLastItem ? ['...', value] : [value, '[0]'];
+		} else {
+			value = [value];
 		}
-		return `Tins(t, ${value})`;
+
+		const code = ['Tins(t, ', ...value, ')'];
+		return { code, location };
 	},
 
 
 	UnaryExpression(node, scope) {
-		let operator = UNI_OP_MAP[node.operator];
-		let argument = scoped(node.argument, scope);
+		const operator = UNI_OP_MAP[node.operator];
+		const argument = scoped(node.argument, scope);
 
 		if (isCallExpression(node.argument)) {
-			argument += '[0]';
+			argument.push('[0]');
 		}
 
 		if (!operator) {
@@ -427,10 +532,12 @@ const GENERATORS = {
 			throw new Error(`Unhandled unary operator: ${node.operator}`);
 		}
 
-		return `__star_op_${operator}(${argument})`;
+		const code = [`__star_op_${operator}(`, argument, ')'];
+		const location = node.loc;
+		return { code, location };
 	},
 
-	//
+	
 	VarargLiteral(node) {
 		return {
 			code: ['...$.getVarargs()'],
@@ -440,58 +547,79 @@ const GENERATORS = {
 
 
 	WhileStatement(node, outerScope) {
-		let { scope, scopeDef } = extendScope(outerScope);
-		let condition = scoped(node.condition, outerScope);
-		let body = this.Chunk(node, scope);
+		const { scope, scopeDef } = extendScope(outerScope);
+		const condition = scoped(node.condition, outerScope);
+		const body = this.Chunk(node, scope);
 
 		const code = ['while(', condition, ') {\n', scopeDef, '\n', body, '\n}'];
-		const location = noe.loc;  
+		const location = node.loc;  
 		return { code, location };
 	},
 
 };
 
 
-// TODO: Remove
-Object.keys(GENERATORS).forEach(key => {
-	const handler = GENERATORS[key];
-	GENERATORS[key] = (...args) => {
-		const result = handler.call(GENERATORS, ...args);
-		if (
-			typeof result !== 'object'
-			|| !result.code
-			|| !result.location
-		){
-			throw new Error('DOES NOT RETURN SOURCE MAP: ' + key);
-		}
-		return result;
-	}
-});
+// // TODO: Remove
+// Object.keys(GENERATORS).forEach(key => {
+// 	const handler = GENERATORS[key];
+// 	GENERATORS[key] = (...args) => {
+// 		const result = handler.call(GENERATORS, ...args);
+// 		if (
+// 			typeof result !== 'object'
+// 			|| !result.code
+// 			|| !result.location
+// 		){
+// console.log(result);
+// 			throw new Error('DOES NOT RETURN SOURCE MAP: ' + key);
+// 		}
+// 		return result;
+// 	}
+// });
 
 
 function parseExpressionList(expressionNodeArray, scope) {
-	return expressionNodeArray.map((node, index, arr) => {
-		let value = scoped(node, scope);
+	const result = expressionNodeArray.reduce((result, node, index, arr) => {
+		const value = scoped(node, scope);
 		if (isCallExpression(node)) {
 			if (index == arr.length - 1) {
-				return `...${value}`;
+				result.push('...', value);
+			} else {
+				result.push(value, '[0]');
 			}
-			return `${value}[0]`;
+		} else {
+			result.push(value);
 		}
-		return value;
-	});
+		result.push(', ');
+		return result;
+	}, []);
+	return result.slice(0, -1);
 }
 
 
-function extendScope(outerIndex) {
-	let scope = scopeIndex++;
-	let scopeDef = `let $${scope} = $${outerIndex}.extend(), $ = $${scope};`;
+function replaceInCode(block, pattern, replace) {
+	return {
+		location: block.location,
+		code: block.code.map(item => {
+			if (typeof item === 'string') {
+				return item.replace(pattern, replace);
+			} else {
+				return replaceInCode(item, pattern, replace);
+			}
+		}),
+	};
+}
+
+
+export function extendScope(outerIndex) {
+	const scope = scopeIndex++;
+	const scopeDef = `let $${scope} = $${outerIndex}.extend(), $ = $${scope};`;
 	return { scope, scopeDef };
 }
 
 
 function scoped(node, scope) {
 	const value = generate(node, scope);
+
 	return {
 		code: node.type === 'Identifier' ? ['$get($, \'', value, '\')'] : [value],
 		location: node.loc,
@@ -505,7 +633,8 @@ function isCallExpression(node) {
 
 
 function generate(ast, scope) {
-	let generator = GENERATORS[ast.type];
+	// console.log('>>-->', ast.type);
+	const generator = GENERATORS[ast.type];
 
 	if (!generator) {
 		console.info(ast);
@@ -516,8 +645,15 @@ function generate(ast, scope) {
 }
 
 
-export function generateTree(ast) {
-	return generate(ast, 0);
+export function generateTree(ast, scope) {
+	return generate(ast, scope);
+}
+
+
+export function generateJS(tree) {
+	return tree.code.map(item => {
+		return (typeof item === 'string') ? item : generateJS(item);
+	}).join('');
 }
 
 

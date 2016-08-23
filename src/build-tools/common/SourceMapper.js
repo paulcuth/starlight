@@ -43,22 +43,31 @@ export default class SourceMapper {
   }
 
 
-  pushCode({ output, srcFilename, srcLine, srcColumn }) {
+  pushCode({ output, srcFilename, srcLine, srcColumn, isBootstrap }) {
     const fileIndex = this.files.findIndex(filename => filename === srcFilename);
     if (fileIndex === -1) {
       throw new ReferenceError(`Unknown source filename: ${srcFilename}`);
     }
 
-    const itemMap = [this.pos.output.column - this.pos.output.prevColumn, fileIndex - this.pos.src.file, srcLine - this.pos.src.line, srcColumn - this.pos.src.column];
+    let itemMap;
+    // if (isBootstrap) {
+      // itemMap = [this.pos.output.column - this.pos.output.prevColumn]; 
+    // } else {
+      itemMap = [this.pos.output.column - this.pos.output.prevColumn, fileIndex - this.pos.src.file, srcLine - this.pos.src.line, srcColumn - this.pos.src.column];
+      // }
+
     const lineMap = this.map[this.pos.output.line] || (this.map[this.pos.output.line] = []);
     const lines = output.split('\n');
 
     this.output.push(output);
     lineMap.push(itemMap);
 
-    this.pos.src.file = fileIndex;
-    this.pos.src.line = srcLine;
-    this.pos.src.column = srcColumn;
+    // if (!isBootstrap) {
+      this.pos.src.file = fileIndex;
+      this.pos.src.line = srcLine;
+      this.pos.src.column = srcColumn;
+    // }
+    
     this.pos.output.line += lines.length - 1;
     this.pos.output.prevColumn = this.pos.output.column;
 
@@ -99,6 +108,7 @@ export default class SourceMapper {
       srcFilename: this.files[0],
       srcLine: 0,
       srcColumn: 0,
+      isBootstrap: true,
     });
 	}
 

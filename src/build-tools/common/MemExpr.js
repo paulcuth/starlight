@@ -1,23 +1,33 @@
 export default class MemExpr extends String {
-	constructor(base, property) {
+	constructor(base, property, location) {
 		super();
 		this.base = base;
-		this.property = property;
+		this.property = property; //Array.isArray(property) ? property : [property];
+		this._location = location;
+		this._isGet = true;
 	}
 
 	get() {
-		return `Tget(${this.base}, ${this.property})`;
+		this._isGet = true;
 	}
 
 	set(value) {
-		return `Tset(${this.base}, ${this.property}, ${value})`;
+		this._isGet = false;
+		this._setValue = value;
 	}
 
-	toString() {
-		return this.get();
+	get code() {
+		if (this._isGet === undefined) {
+			// throw new Error('Member expression direction not set');
+		} else if (this._isGet) {
+			return ['Tget(', this.base, ', ', ...this.property, ')'];
+		} else {
+			return ['Tset(', this.base, ', ', ...this.property, ', ', ...this._setValue, ')'];
+		}
 	}
 
-	valueOf() {
-		return this.get();
+	get location() {
+		return this._location;
 	}
+
 }
