@@ -669,4 +669,11 @@ assertTrue (b == 999, 'xpcall() should return the first item of the result of th
 assertTrue (c == nil, 'xpcall() should only return the first item of the result of the error function in the items following the first item returned, when the function errors during execution')
 
 
+-- Libs should be preloaded
+assertTrue (package.loaded.table == table, 'table library should exist in package.loaded')
+assertTrue (package.loaded.string == string, 'string library should exist in package.loaded')
+assertTrue (package.loaded.math == math, 'math library should exist in package.loaded')
+assertTrue (package.loaded.os == os, 'os library should exist in package.loaded')
+assertTrue (package.loaded.package == package, 'package library should exist in package.loaded')
+assertTrue (package.loaded._G == _G, '_G should exist in package.loaded')
 

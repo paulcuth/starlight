@@ -2,11 +2,12 @@ import { default as LuaError } from './LuaError';
 import { type } from './lib/globals';
 
 let count = 0;
-let stringLib, getn;
+let stringTable, getn;
 
 export function registerLibs(libs) {
 	// Can't import directly because they'll create a circular dependencies. :(
-	stringLib = libs.string;
+	stringTable = new Table();
+	stringTable.metatable = libs.stringMetatable;
 	getn = libs.getn;
 };
 
@@ -45,7 +46,7 @@ export default class Table {
 	get(key) {
 		if (!(this instanceof Table)) {
 			if (type(this) == 'string') {
-				return stringLib.get(key);
+				return stringTable.get(key);
 
 			} else if (
 				type(this) === 'userdata'

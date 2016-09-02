@@ -59,20 +59,27 @@ let runtime = namespace.runtime = {
 
 // The following should be configurable
 
+import { default as _package } from './lib/package';
+const loaded = _package.get('loaded');
+loaded.set('_G', _G);
+
+_G.set('package', _package);
+loaded.set('package', _package);
+
 import { default as math } from './lib/math';
 _G.set('math', math);
+loaded.set('math', math);
 
 import { default as table, getn } from './lib/table';
 _G.set('table', table);
+loaded.set('table', table);
 
-import { default as string } from './lib/string';
+import { default as string, metatable as stringMetatable } from './lib/string';
 _G.set('string', string);
+loaded.set('string', string);
 
 import { default as os } from './lib/os';
 _G.set('os', os);
+loaded.set('os', os);
 
-import { default as _package } from './lib/package';
-_G.set('package', _package);
-
-registerLibs({ string, getn });
-
+registerLibs({ stringMetatable, getn });

@@ -647,4 +647,7 @@ a = ('Hey'):lower()
 assertEqual (a, 'hey', 'String lib should be metamethod of string instances.')
 
 
+local foo = "bar"
+getmetatable(foo).__index = function () return "Random String" end
+assertEqual (foo.random_index, "Random String", 'Metamethod of string instances should be updateable')
 
