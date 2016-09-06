@@ -25,7 +25,7 @@ function binaryArithmetic(left, right, metaMethodName, callback) {
 
 
 function binaryStringArithmetic(left, right, metaMethodName, callback) {
-	if (typeof left == 'string' && typeof right == 'string') {
+	if (typeof left === 'string' && typeof right === 'string') {
 		return callback(left, right);
 	}
 	return binaryArithmetic(left, right, metaMethodName, callback);
@@ -49,7 +49,7 @@ function concat(left, right) {
 
 
 function equal(left, right) {
-	var mtl, mtr, f, result;
+	let mtl, mtr, f, result;
 
 	if (right !== left 
 		&& left && left instanceof T 

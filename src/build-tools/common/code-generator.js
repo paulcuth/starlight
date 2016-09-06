@@ -40,28 +40,10 @@ const GENERATORS = {
 
 			if (name.code[0] instanceof MemExpr) {
 				name.code[0].set(`__star_tmp[${index}]`);
-				// result.push(name);
 
 			} else {
-// console.log('\n\n\n',variable)
-				// let root = name;
-				// while (typeof root.code[0] !== 'string') {
-				// 	root = root.code
-				// }
-
-				// if (name.code[0] !== '$get($, \'') {
-				// 	throw new Error('Unhandled'); 					
-				// }
-
-				// name.code = ['$set($, \'', name.code[1], `\', __star_tmp[${index}])`]; 
 				name.code[0] = '$set($, \'';
 				name.code[name.code.length - 1] = `\', __star_tmp[${index}]);`; 
-				// const [match, args] = [].concat(name.toString().match(/^\$get\((.*)\)$/));
-				// if (!match) {
-				// 	throw new Error('Unhandled'); 
-				// }
-
-				// return `$set(${args}, __star_tmp[${index}])`;
 			}
 
 			result.push(name);
@@ -69,9 +51,10 @@ const GENERATORS = {
 		}, []);
 
 		const values = parseExpressionList(node.init, scope);
-		const code = ['__star_tmp = [', ...values, '];', ...assignments];
 		const location = node.loc;
-		return { code, location };
+		const initCode = { code: ['__star_tmp = ['], location };
+		const code = [initCode, ...values, '];', ...assignments];
+		return { code, location, notMapped: true };
 	},
 
 
@@ -192,9 +175,9 @@ const GENERATORS = {
 		const init = [`$${outerScope}._forLoop${loopIndex} = `, start];
 		const cond = [`$${outerScope}._forLoop${loopIndex} ${operator} `, end];
 		const after = [`$${outerScope}._forLoop${loopIndex} += `, step];
-		const varInit = [`$${scope}.setLocal('`, variableName, `',$${outerScope}._forLoop${loopIndex});`];
-		const code = ['for (', ...init, '; ', ...cond, '; ', ...after, ') {\n', scopeDef, '\n', ...varInit, '\n', body, '\n}'];
-		return { code, location };
+		const initCode = { code: [`$${scope}.setLocal('`, variableName, `',$${outerScope}._forLoop${loopIndex});`], location };
+		const code = ['for (\n', ...init, ';\n', ...cond, ';\n', ...after, ') {\n', scopeDef, '\n', initCode, '\n', body, '\n}'];
+		return { code, location, notMapped: true };
 	},
 
 
@@ -212,9 +195,10 @@ const GENERATORS = {
 		}, []);
 
 		const defs = scopeDef.split(', ');
-		const code = [`${defs[0]};\n[$${scope}._iterator, $${scope}._table, $${scope}._next] = [`, ...iterators, `];\nwhile((__star_tmp = __star_call($${scope}._iterator, $${scope}._table, $${scope}._next)),__star_tmp[0] !== undefined) {\n${iterationScopeDef}\$${scope}._next = __star_tmp[0]\n`, ...variables, '\n', body, '\n}'];
+		const initCode = { code: variables, location };
+		const code = [`${defs[0]};\n[$${scope}._iterator, $${scope}._table, $${scope}._next] = [`, ...iterators, `];\nwhile((__star_tmp = __star_call($${scope}._iterator, $${scope}._table, $${scope}._next)),__star_tmp[0] !== undefined) {\n${iterationScopeDef}\$${scope}._next = __star_tmp[0]\n`, initCode, '\n', body, '\n}'];
 
-		return { code, location };
+		return { code, location, notMapped: true };
 	},
 
 
@@ -421,7 +405,7 @@ const GENERATORS = {
 
 	ReturnStatement(node, scope) {
 		const args = parseExpressionList(node.arguments, scope);
-		const code = ['return [', ...args, '];'];
+		const code = ['return [', ...args, '];\n'];
 		const location = node.loc;
 		return { code, location };
 	},
@@ -478,9 +462,10 @@ const GENERATORS = {
 			return result;
 		}, []);
 
-		const code = ['new __star_T(t => {\n', ...fields, '})'];
 		const location = node.loc;
-		return { code, location };
+		const initCode = { code: ['new __star_T(t => {\n'], location };
+		const code = [initCode, ...fields, '})\n'];
+		return { code, location, notMapped: true };
 	},
 
 
