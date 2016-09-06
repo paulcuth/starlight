@@ -150,7 +150,7 @@ const GENERATORS = {
 		const code = [];
 
 		node.body.forEach(statement => code.push(generate(statement, scope), '\n'));
-		return { location, code };
+		return { location, code, notMapped: true };
 	},
 
 
@@ -250,24 +250,22 @@ const GENERATORS = {
 		}
 
 		const body = this.Chunk(node, scope);
+		body.code.pop();	// Remove newline
+
 		const doesReturn = node.body.length > 0 && node.body[node.body.length - 1].type === 'ReturnStatement';
 		const prefix = isAnonymous? '' : 'func$';
-		const endLoc = {
-			line: node.loc.end.line,
-			column: node.loc.end.column - 3,
+		const location = node.loc;
+		const funcBootstrap = { 
+			code: [scopeDef, ...params, ';'], 
+			location, 
+			notMapped: true 
 		};
 		const endNode = {
-			code: [' ', (doesReturn ? '' : 'return [];'), `}, __star_tmp.toString=()=>'function: 0x${(++functionIndex).toString(16)}', __star_tmp)`],
-			location: {
-				start: endLoc,
-				end: node.loc.end, 
-			}
+			code: [(doesReturn ? '' : '\nreturn [];'), `}, __star_tmp.toString=()=>'function: 0x${(++functionIndex).toString(16)}', __star_tmp)\n`],
+			location,
+			notMapped: true,
 		}
-		const funcDef = [`(__star_tmp = function ${prefix}`, ...name, `(...args){${scopeDef}\n`, ...params, ';\n', body, endNode];
-		const location = {
-			start: node.loc.start,
-			end: endLoc,
-		}
+		const funcDef = [`(__star_tmp = function ${prefix}`, ...name, '(...args){\n', funcBootstrap, body, endNode];
 
 		let code;
 		if (isAnonymous) {

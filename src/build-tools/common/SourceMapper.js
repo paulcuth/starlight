@@ -27,10 +27,14 @@ export default class SourceMapper {
         line: 0,
         column: 0,
       },
-      output: {
+      lastOutput: {
         line: 0,
         column: 0,
         prevColumn: 0,
+      },
+      output: {
+        line: 0,
+        column: 0,
       },
     };
 
@@ -43,52 +47,52 @@ export default class SourceMapper {
   }
 
 
-  pushCode({ output, srcFilename, srcLine, srcColumn, isBootstrap }) {
+  pushCode({ output, srcFilename, srcLine, srcColumn, notMapped }) {
     const fileIndex = this.files.findIndex(filename => filename === srcFilename);
     if (fileIndex === -1) {
       throw new ReferenceError(`Unknown source filename: ${srcFilename}`);
     }
 
-    let itemMap;
-    // if (isBootstrap) {
-      // itemMap = [this.pos.output.column - this.pos.output.prevColumn]; 
-    // } else {
-      itemMap = [this.pos.output.column - this.pos.output.prevColumn, fileIndex - this.pos.src.file, srcLine - this.pos.src.line, srcColumn - this.pos.src.column];
-      // }
-
+    const itemMap = [this.pos.lastOutput.column - this.pos.lastOutput.prevColumn, fileIndex - this.pos.src.file, srcLine - this.pos.src.line, srcColumn - this.pos.src.column];
     const lineMap = this.map[this.pos.output.line] || (this.map[this.pos.output.line] = []);
     const lines = output.split('\n');
 
     this.output.push(output);
-    lineMap.push(itemMap);
-
-    // if (!isBootstrap) {
-      this.pos.src.file = fileIndex;
-      this.pos.src.line = srcLine;
-      this.pos.src.column = srcColumn;
-    // }
-    
     this.pos.output.line += lines.length - 1;
-    this.pos.output.prevColumn = this.pos.output.column;
-
+ 
     if (lines.length === 1) {
       this.pos.output.column += output.length;
     } else {
-      this.pos.output.prevColumn = 0
-      this.pos.output.column = lines[lines.length - 1].length;
+      this.pos.lastOutput.prevColumn = 0;
+      this.pos.lastOutput.column = lines[lines.length - 1].length;
+      this.pos.output.column = this.pos.lastOutput.column;      
+    }
+
+    if (!notMapped) {
+      lineMap.push(itemMap);
+
+      this.pos.src.file = fileIndex;
+      this.pos.src.line = srcLine;
+      this.pos.src.column = srcColumn;
+
+      this.pos.lastOutput = {
+        ...this.pos.output,
+        prevColumn: this.pos.lastOutput.column,
+      };
     }
 
   }
 
 
   pushTree({ tree, filename }) {
-    tree.code.forEach(item => {
+    tree.code.forEach((item, index) => {
       if (typeof item === 'string') {
         this.pushCode({
           output: item,
           srcFilename: filename, 
           srcLine: tree.location.start.line - 1,
           srcColumn: tree.location.start.column,
+          notMapped: tree.notMapped,
         });
 
       } else {
@@ -108,7 +112,7 @@ export default class SourceMapper {
       srcFilename: this.files[0],
       srcLine: 0,
       srcColumn: 0,
-      isBootstrap: true,
+      notMapped: true,
     });
 	}
 
