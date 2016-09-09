@@ -36,7 +36,8 @@ module.exports = function(grunt) {
   grunt.registerMultiTask('starlight', 'A Lua -> ES6 transpiler', function() {
     // Merge task-specific and/or target-specific options with these defaults.
     const options = this.options({
-      basePath: ''
+      basePath: '',
+      sourceMap: false,
     });
 
     // Iterate over all specified file groups.
@@ -106,15 +107,18 @@ module.exports = function(grunt) {
 
       // Write output and source map files
       const { output, sourceMap } = sourceMapper.render({ outputFilename: f.dest });
-      const outputWritten = grunt.file.write(f.dest, `;(()=>{${output}})();\n//# sourceMappingURL=${path.basename(f.dest)}.map`);
-      const mapWritten = grunt.file.write(`${f.dest}.map`, sourceMap);
+      const sourceMapLink = options.sourceMap ? `\n//# sourceMappingURL=${path.basename(f.dest)}.map` : '';
 
-      // Print a success message.
+      const outputWritten = grunt.file.write(f.dest, `;(()=>{${output}})();${sourceMapLink}`);
       if (outputWritten) {
         grunt.log.writeln(`File "${f.dest}" created.`);
       }
-      if (mapWritten) {
-        grunt.log.writeln(`File "${f.dest}.map" created.`);
+
+      if (options.sourceMap) {
+        const mapWritten = grunt.file.write(`${f.dest}.map`, sourceMap);
+        if (mapWritten) {
+          grunt.log.writeln(`File "${f.dest}.map" created.`);
+        }
       }
 
     });
