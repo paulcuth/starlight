@@ -9,17 +9,12 @@ function transformMap(map) {
 
 
 export default class SourceMapper {
-	constructor({ bootstrap }) {
+
+	constructor() {
 		this.files = [];
     this.content = [];
     this.output = [];
     this.map = [];
-    this.hasBootstrap = !!bootstrap;
-
-    if (bootstrap) {
-      this.files.push(bootstrap.filename);
-      this.content.push(bootstrap.content);
-    }
 
     this.pos = {
       src: {
@@ -49,7 +44,7 @@ export default class SourceMapper {
 
   pushCode({ output, srcFilename, srcLine, srcColumn, notMapped }) {
     const fileIndex = this.files.findIndex(filename => filename === srcFilename);
-    if (fileIndex === -1) {
+    if (!notMapped && fileIndex === -1) {
       throw new ReferenceError(`Unknown source filename: ${srcFilename}`);
     }
 
@@ -103,10 +98,6 @@ export default class SourceMapper {
 
 
   pushBootstrap(output) {
-    if (!this.hasBootstrap) {
-      throw new ReferenceError('Source mapper does have a bootstrap file');
-    } 
-
     this.pushCode({ 
       output, 
       srcFilename: this.files[0],

@@ -45,12 +45,7 @@ module.exports = function(grunt) {
       let mainFilename = options.main;
       let firstFilename;
 
-      const sourceMapper = new SourceMapper({
-        bootstrap: {
-          filename: 'starlight.js',
-          content: '-- Starlight bootstrap code',
-        },
-      });
+      const sourceMapper = new SourceMapper();
 
       const runtimeInit = codeGen.getRuntimeInit();
       sourceMapper.pushBootstrap(runtimeInit);
