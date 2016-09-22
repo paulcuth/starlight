@@ -196,7 +196,7 @@ const GENERATORS = {
 
 		const defs = scopeDef.split(', ');
 		const initCode = { code: variables, location };
-		const code = [`${defs[0]};\n[$${scope}._iterator, $${scope}._table, $${scope}._next] = [`, ...iterators, `];\nwhile((__star_tmp = __star_call($${scope}._iterator, $${scope}._table, $${scope}._next)),__star_tmp[0] !== undefined) {\n${iterationScopeDef}\$${scope}._next = __star_tmp[0]\n`, initCode, '\n', body, '\n}'];
+		const code = [`${defs[0]};\n[$${scope}._iterator, $${scope}._table, $${scope}._next] = [`, ...iterators, `\n];\nwhile((__star_tmp = __star_call($${scope}._iterator, $${scope}._table, $${scope}._next)),__star_tmp[0] !== undefined) {\n${iterationScopeDef}\$${scope}._next = __star_tmp[0]\n`, initCode, '\n', body, '\n}'];
 
 		return { code, location, notMapped: true };
 	},
