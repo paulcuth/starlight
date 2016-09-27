@@ -422,7 +422,7 @@ const GENERATORS = {
 		let code;
 
 		if (/^\[\[[^]*]$/m.test(raw)) {
-			code = [`\`${raw.substr(2, raw.length - 4).replace(/\\/g, '\\\\')}\``];
+			code = [`'${raw.substr(2, raw.length - 4).replace(/\\/g, '\\\\').replace(/\n/g, '\\n')}'`];
 		} else {
 			code = [raw.replace(/([^\\])\\(\d{1,3})/g, (_, pre, dec) => `${pre}\\u${('000' + parseInt(dec, 10).toString(16)).substr(-4)}`)];
 		}
