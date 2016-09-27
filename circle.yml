@@ -7,7 +7,7 @@
     override:
       - npm run test
   deployment:
-    npm:
+    release:
       branch: master
       commands:
         - grunt grunt-plugin
@@ -15,3 +15,11 @@
         - node ci/tag
         - echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/.npmrc
         - npm publish dist/build-tools/grunt-starlight
+    beta:
+      branch: beta
+      commands:
+        - grunt grunt-plugin
+        - node ci/sync-plugin-version
+        - node ci/tag
+        - echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/.npmrc
+        - npm publish dist/build-tools/grunt-starlight --tag beta
