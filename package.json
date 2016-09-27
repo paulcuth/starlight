@@ -38,7 +38,9 @@
     "luaparse": "^0.1.15",
     "through": "^2.3.7",
     "vinyl-buffer": "^1.0.0",
-    "vinyl-source-stream": "^1.1.0"
+    "vinyl-source-stream": "^1.1.0",
+    "luaparse": "paulcuth/luaparse",
+    "vlq": "^0.2.1"
   },
   "scripts": {
     "test": "grunt grunt-plugin node-test"

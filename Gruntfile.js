@@ -69,8 +69,8 @@ module.exports = function(grunt) {
 				]
 			},
 			test: {
-				sourceMap: true,
-				inputSourceMap: grunt.file.readJSON('dist/test/test.lua.es6.js.map'),
+				// sourceMap: true,
+				// inputSourceMap: grunt.file.readJSON('dist/test/test.lua.es6.js.map'),
 				src: 'dist/test/test.lua.es6.js',
 				dest: 'dist/test/test.lua.js'
 			},
